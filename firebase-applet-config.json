@@ -1,10 +1,11 @@
 {
-  apiKey: "AIzaSyCLUfSemgUEytbDeEzTb50AVZfBAH7r9OQ",
-  authDomain: "my-medil.firebaseapp.com",
-  databaseURL: "https://my-medil-default-rtdb.firebaseio.com",
-  projectId: "my-medil",
-  storageBucket: "my-medil.firebasestorage.app",
-  messagingSenderId: "424570340142",
-  appId: "1:424570340142:web:24f23331eb9fd3dfd470bf",
-  measurementId: "G-4SN2P8CRCN"
+  "projectId": "my-medil",
+  "appId": "1:424570340142:web:24f23331eb9fd3dfd470bf",
+  "apiKey": "AIzaSyCLUfSemgUEytbDeEzTb50AVZfBAH7r9OQ",
+  "authDomain": "my-medil.firebaseapp.com",
+  "databaseURL": "https://my-medil-default-rtdb.firebaseio.com",
+  "firestoreDatabaseId": "(default)",
+  "storageBucket": "my-medil.firebasestorage.app",
+  "messagingSenderId": "424570340142",
+  "measurementId": "G-4SN2P8CRCN"
 }
