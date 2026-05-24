@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, FormEvent } from 'react';
 import { Player, Transaction, GameMap, MatchScore } from './types';
 import { ALL_MAPS, ALL_WEAPONS, ALL_SKINS, synths } from './gameData';
 import Battlefield from './components/Battlefield';
@@ -17,6 +17,12 @@ export default function App() {
   const [guestMode, setGuestMode] = useState(false);
   const [guestEmail, setGuestEmail] = useState('nesmanagah53@gmail.com');
 
+  // Admin credentials states (initially empty as requested by user)
+  const [loginMode, setLoginMode] = useState<'player' | 'admin'>('player');
+  const [adminUsername, setAdminUsername] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
+  const [adminError, setAdminError] = useState('');
+
   // Player inventory/profile stats
   const [playerData, setPlayerData] = useState<Player | null>(null);
 
@@ -31,6 +37,42 @@ export default function App() {
   
   // Modals
   const [isChargeOpen, setIsChargeOpen] = useState(false);
+
+  // Progressive Web App (PWA) installation states for mobile devices
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallBtn, setShowInstallBtn] = useState(false);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallBtn(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    // Initial check for standalone mode
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+       setShowInstallBtn(false);
+    }
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallApp = async () => {
+    if (!deferredPrompt) {
+      alert('ميزة التثبيت متاحة عند فتح اللعبة على متصفح الهاتف أو الكروم مباشرة كـ تطبيق Progressive Web App (PWA).');
+      return;
+    }
+    synths.playClick();
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log(`User installation choice outcome: ${outcome}`);
+    setDeferredPrompt(null);
+    setShowInstallBtn(false);
+  };
 
   // 1. Hook up real Firebase Authentication listeners
   useEffect(() => {
@@ -320,6 +362,42 @@ export default function App() {
     }
   };
 
+  const handleAdminCredentialsSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    synths.playClick();
+    if (adminUsername === 'admin' && adminPassword === 'admin1234') {
+      setLoading(true);
+      setAdminError('');
+      
+      const adminUid = 'ADMIN_SUPER_SECURE_KEY_53';
+      const adminEmail = 'nesmanagah53@gmail.com';
+      const adminDisplayName = 'المشرف العام (Admin)';
+      
+      setCurrentUser({
+        uid: adminUid,
+        displayName: adminDisplayName,
+        email: adminEmail,
+        emailVerified: true
+      } as any);
+      
+      setGuestMode(true);
+      
+      // Synchronize player profile as admin
+      await syncPlayerProfile(adminUid, adminDisplayName, adminEmail);
+      
+      // Clear credentials
+      setAdminUsername('');
+      setAdminPassword('');
+      
+      // Auto routing into the secure Admin Tab
+      setCurrentTab('admin');
+      setLoading(false);
+    } else {
+      setAdminError('خطأ: بيانات الدخول الفنية للمشرف غير صحيحة!');
+      synths.playClick();
+    }
+  };
+
   const handleSignOut = async () => {
     synths.playClick();
     if (isFirebaseLive) {
@@ -457,31 +535,128 @@ export default function App() {
               لعبة حرب تكتيكية ثلاثية الأبعاد كاملة، يمكنك ترقية الأسلحة وحفظ تقدمك وشراء الملابس العسكرية عبر حسابك.
             </p>
 
-            <div className="p-4 bg-slate-950 border border-slate-800/80 rounded-xl space-y-2.5 text-right text-xs">
-              <span className="font-bold text-yellow-500 block mb-1">🎮 خصائص اللعبة الرئيسية:</span>
-              <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-300">
-                <div>● رسوميات WebGL بمؤثرات قوية</div>
-                <div>● متجر أسلحة وترقيات ودروع</div>
-                <div>● دعم شحن سريع عبر InstaPay</div>
-                <div>● تفعيل تلقائي وآمن للمنصة</div>
+            {/* PWA Mobile App Install Feature Banner */}
+            <div className="mx-auto max-w-sm p-3 bg-gradient-to-r from-indigo-950/40 to-slate-950/60 border border-indigo-500/20 rounded-xl flex items-center justify-between gap-3 text-right">
+              <div className="space-y-0.5">
+                <span className="text-xs font-black text-indigo-300 block">📱 تثبيت التطبيق على الأندرويد والهاتف</span>
+                <span className="text-[10px] text-slate-400 block font-semibold leading-tight">العب بملء الشاشة مع سرعة كاملة وبدون متصفح مكرر!</span>
               </div>
-            </div>
-
-            {/* Simulated / Real Sign in toggle */}
-            <div className="space-y-4">
               <button
-                id="big_google_login_btn"
-                onClick={handleGoogleSignIn}
-                className="w-full py-4 bg-indigo-600 hover:bg-slate-100 active:bg-slate-200 hover:text-slate-900 text-white font-extrabold rounded-xl transition duration-200 text-center flex items-center justify-center gap-2 text-base shadow-xl cursor-pointer"
+                id="install_pwa_banner_btn"
+                onClick={handleInstallApp}
+                className="py-1.5 px-3 bg-indigo-600 hover:bg-indigo-500 text-white font-black text-[11px] rounded-lg shadow-lg shadow-indigo-900/40 active:scale-95 transition cursor-pointer shrink-0"
               >
-                <Sparkles className="w-5 h-5 animate-spin" />
-                دخول المعركة الآن (حساب المشرف الافتراضي) ⚡
+                تنزيل الآن ⚡
               </button>
-
-              <p className="text-[10px] text-slate-500 leading-normal block max-w-md mx-auto">
-                ملاحظة: يمكنك إدخال أي بريد إلكتروني في الخانة العلوية للدخول تحت هويته كلاعب تجريبي، لمست بريد المشرف المعتمد <span className="font-mono text-indigo-400">nesmanagah53@gmail.com</span> وسيتم تفعيل صلاحيات الإدارة الكاملة تلقائياً!
-              </p>
             </div>
+
+            {/* Login Tabs Selector */}
+            <div className="flex bg-slate-950 p-1.5 rounded-xl border border-slate-800/80">
+              <button
+                id="splash_tab_admin"
+                type="button"
+                onClick={() => { setLoginMode('admin'); synths.playClick(); }}
+                className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                  loginMode === 'admin' ? 'bg-indigo-600 text-white shadow-md font-extrabold' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Shield className="w-3.5 h-3.5" />
+                لوحة تحكم المسؤول (admin) ⚙️
+              </button>
+              <button
+                id="splash_tab_player"
+                type="button"
+                onClick={() => { setLoginMode('player'); synths.playClick(); }}
+                className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                  loginMode === 'player' ? 'bg-indigo-600 text-white shadow-md font-extrabold' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Users className="w-3.5 h-3.5" />
+                دخول اللاعبين (Players)
+              </button>
+            </div>
+
+            {loginMode === 'admin' ? (
+              /* Administrative Custom Login Form */
+              <form onSubmit={handleAdminCredentialsSubmit} className="space-y-4 text-right bg-slate-950/40 p-5 rounded-xl border border-slate-800/60">
+                <div className="text-center pb-2">
+                  <span className="text-xs font-bold text-amber-500 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">
+                    🔐 يرجى إدخال بيانات الإشراف الفني
+                  </span>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs text-slate-400 block font-bold">اسم المستخدم (Username)</label>
+                  <input
+                    id="admin_username_input"
+                    type="text"
+                    required
+                    value={adminUsername}
+                    onChange={(e) => setAdminUsername(e.target.value)}
+                    placeholder="اكتب هنا اسم المستخدم الفني..."
+                    className="w-full bg-slate-950 border border-slate-850 p-3 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500 text-right pr-4 font-mono"
+                    autoComplete="off"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs text-slate-400 block font-bold">كلمة المرور الإدارية (Password)</label>
+                  <input
+                    id="admin_password_input"
+                    type="password"
+                    required
+                    value={adminPassword}
+                    onChange={(e) => setAdminPassword(e.target.value)}
+                    placeholder="اكتب هنا رمز المرور السري..."
+                    className="w-full bg-slate-950 border border-slate-850 p-3 rounded-lg text-sm text-white focus:outline-none focus:border-indigo-500 text-right pr-4 font-mono"
+                    autoComplete="off"
+                  />
+                </div>
+
+                {adminError && (
+                  <div className="p-3 bg-red-950/50 border border-red-500/20 text-red-400 text-xs rounded-lg text-center font-bold">
+                    ⚠️ {adminError}
+                  </div>
+                )}
+
+                <button
+                  id="admin_submit_btn"
+                  type="submit"
+                  className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-extrabold rounded-xl transition duration-150 text-center flex items-center justify-center gap-2 text-sm shadow-xl cursor-pointer"
+                >
+                  <Shield className="w-4 h-4" />
+                  تسجيل الدخول وعرض الطلبات فورا ⚡
+                </button>
+              </form>
+            ) : (
+              /* Normal Player access tab options */
+              <div className="space-y-5">
+                <div className="p-4 bg-slate-950 border border-slate-800/80 rounded-xl space-y-2.5 text-right text-xs">
+                  <span className="font-bold text-yellow-500 block mb-1">🎮 خصائص اللعبة الرئيسية:</span>
+                  <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-300">
+                    <div>● رسوميات WebGL بمؤثرات قوية</div>
+                    <div>● متجر أسلحة وترقيات ودروع</div>
+                    <div>● دعم شحن سريع عبر InstaPay</div>
+                    <div>● تفعيل تلقائي وآمن للمنصة</div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <button
+                    id="big_google_login_btn"
+                    onClick={handleGoogleSignIn}
+                    className="w-full py-4 bg-indigo-600 hover:bg-slate-100 active:bg-slate-200 hover:text-slate-900 text-white font-extrabold rounded-xl transition duration-200 text-center flex items-center justify-center gap-2 text-base shadow-xl cursor-pointer"
+                  >
+                    <Sparkles className="w-5 h-5 animate-spin" />
+                    دخول المعركة الآن (حساب لاعب قتالي) ⚡
+                  </button>
+
+                  <p className="text-[10px] text-slate-500 leading-normal block max-w-md mx-auto">
+                    ملاحظة: يمكنك إدخال أي بريد إلكتروني في الخانة العلوية للدخول تحت هويته كلاعب تجريبي، لمست بريد المشرف المعتمد <span className="font-mono text-indigo-400">nesmanagah53@gmail.com</span> وسيتم تفعيل صلاحيات الإدارة الكاملة تلقائياً!
+                  </p>
+                </div>
+              </div>
+            )}
 
           </div>
         ) : inBattle ? (

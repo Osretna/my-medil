@@ -25,16 +25,159 @@ interface HumanoidModel {
   torso: THREE.Mesh;
 }
 
+// ==================== PROCEDURAL HIGH-FIDELITY MILITARY TEXTURE GENERATORS ====================
+function createProceduralCamoTexture(baseHex: string, darkHex: string, lightHex: string): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas');
+  canvas.width = 128;
+  canvas.height = 128;
+  const ctx = canvas.getContext('2d')!;
+  
+  // Base uniform color
+  ctx.fillStyle = baseHex;
+  ctx.fillRect(0, 0, 128, 128);
+  
+  // High contrast military splotches
+  for (let i = 0; i < 35; i++) {
+    ctx.fillStyle = Math.random() < 0.55 ? darkHex : lightHex;
+    ctx.beginPath();
+    const x = Math.random() * 128;
+    const y = Math.random() * 128;
+    const r = 6 + Math.random() * 15;
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Splatter noise
+    ctx.beginPath();
+    ctx.arc(x + (Math.random() - 0.5) * r, y + (Math.random() - 0.5) * r, r * 0.4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(2, 2);
+  return texture;
+}
+
+function createProceduralGroundTexture(mapId: string, baseHex: string): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas');
+  canvas.width = 256;
+  canvas.height = 256;
+  const ctx = canvas.getContext('2d')!;
+  
+  ctx.fillStyle = baseHex;
+  ctx.fillRect(0, 0, 256, 256);
+  
+  if (mapId === 'desert') {
+    // Sandy gravel ground
+    ctx.fillStyle = 'rgba(180, 83, 9, 0.16)';
+    for (let i = 0; i < 1200; i++) {
+      ctx.fillRect(Math.random() * 256, Math.random() * 256, 1.5, 1.5);
+    }
+    // Sand dune ridges
+    ctx.strokeStyle = 'rgba(180, 83, 9, 0.07)';
+    ctx.lineWidth = 3;
+    for (let loop = 0; loop < 6; loop++) {
+      ctx.beginPath();
+      const y = loop * 45 + Math.random() * 10;
+      ctx.moveTo(0, y);
+      for (let x = 0; x <= 256; x += 25) {
+        ctx.lineTo(x, y + Math.sin(x * 0.06) * 12);
+      }
+      ctx.stroke();
+    }
+    // High-fidelity random rocks
+    for (let i = 0; i < 30; i++) {
+      ctx.fillStyle = Math.random() < 0.5 ? '#92400e' : '#b45309';
+      ctx.beginPath();
+      ctx.arc(Math.random() * 256, Math.random() * 256, 1.5 + Math.random() * 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else if (mapId === 'city') {
+    // Concrete cracks / Asphalt pits & yellow warning lines
+    ctx.fillStyle = 'rgba(17, 24, 39, 0.22)';
+    for (let i = 0; i < 900; i++) {
+      ctx.fillRect(Math.random() * 256, Math.random() * 256, 2, 2);
+    }
+    // Cracks
+    ctx.strokeStyle = 'rgba(9, 9, 11, 0.65)';
+    ctx.lineWidth = 1;
+    for (let c = 0; c < 8; c++) {
+      ctx.beginPath();
+      let cx = Math.random() * 256;
+      let cy = Math.random() * 256;
+      ctx.moveTo(cx, cy);
+      for (let j = 0; j < 5; j++) {
+        cx += (Math.random() - 0.5) * 35;
+        cy += (Math.random() - 0.5) * 35;
+        ctx.lineTo(cx, cy);
+      }
+      ctx.stroke();
+    }
+  } else {
+    // Dense jungle floor with details
+    ctx.fillStyle = 'rgba(6, 78, 59, 0.3)';
+    for (let i = 0; i < 800; i++) {
+      ctx.fillRect(Math.random() * 256, Math.random() * 256, 2.5, 2.5);
+    }
+    // Herbaceous grass clusters overlay
+    ctx.strokeStyle = '#022c22';
+    ctx.lineWidth = 1.6;
+    for (let g = 0; g < 150; g++) {
+      const gx = Math.random() * 256;
+      const gy = Math.random() * 256;
+      ctx.beginPath();
+      ctx.moveTo(gx, gy);
+      ctx.lineTo(gx - 3, gy - 8);
+      ctx.moveTo(gx, gy);
+      ctx.lineTo(gx + 3, gy - 9);
+      ctx.stroke();
+    }
+  }
+  
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(16, 16);
+  return texture;
+}
+
+function createProceduralRustTexture(baseHex: string): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas');
+  canvas.width = 64;
+  canvas.height = 64;
+  const ctx = canvas.getContext('2d')!;
+  
+  ctx.fillStyle = baseHex;
+  ctx.fillRect(0, 0, 64, 64);
+  
+  // Rust overlay
+  ctx.fillStyle = 'rgba(154, 52, 18, 0.4)';
+  for (let i = 0; i < 15; i++) {
+    ctx.beginPath();
+    ctx.arc(Math.random() * 64, Math.random() * 64, 2 + Math.random() * 6, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  return new THREE.CanvasTexture(canvas);
+}
+
 // Procedural detailed humanoid soldier builder
 function buildHumanoidSoldier(skinHexColor: string, isEnemy: boolean): HumanoidModel {
   const group = new THREE.Group();
 
-  // Torso / tactical mesh
+  // Create customized military camouflage textures dynamically
+  const camoUniformTex = createProceduralCamoTexture(
+    isEnemy ? '#450a0a' : skinHexColor, 
+    isEnemy ? '#111827' : '#1e293b', 
+    isEnemy ? '#991b1b' : '#334155'
+  );
+
+  // Torso / tactical fatigue fabric mesh
   const torsoGeo = new THREE.BoxGeometry(0.55, 0.75, 0.35);
   const torsoMat = new THREE.MeshStandardMaterial({
-    color: isEnemy ? new THREE.Color('#991b1b') : new THREE.Color(skinHexColor),
-    roughness: 0.5,
-    metalness: 0.2
+    map: camoUniformTex,
+    roughness: 0.8,
+    metalness: 0.1
   });
   const torso = new THREE.Mesh(torsoGeo, torsoMat);
   torso.position.y = 0.8;
@@ -42,76 +185,166 @@ function buildHumanoidSoldier(skinHexColor: string, isEnemy: boolean): HumanoidM
   torso.receiveShadow = true;
   group.add(torso);
 
-  // Tactical combat vest on top of torso
+  // Tactical combat armor plate vest on top of torso
   const vestGeo = new THREE.BoxGeometry(0.61, 0.55, 0.41);
   const vestMat = new THREE.MeshStandardMaterial({
-    color: isEnemy ? new THREE.Color('#450a0a') : new THREE.Color('#1e293b'),
-    roughness: 0.7,
-    metalness: 0.15
+    color: isEnemy ? new THREE.Color('#310808') : new THREE.Color('#0f172a'),
+    roughness: 0.6,
+    metalness: 0.3
   });
   const vest = new THREE.Mesh(vestGeo, vestMat);
-  vest.position.y = 0.0;
+  vest.position.y = 0.01;
   vest.castShadow = true;
   torso.add(vest);
 
-  // Soldier head
-  const headGeo = new THREE.BoxGeometry(0.32, 0.32, 0.32);
+  // Add highly detailed front gear compartments (Ammo pouches & Grenades) on vest belt
+  const pouchGeo = new THREE.BoxGeometry(0.14, 0.20, 0.12);
+  const pouchMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.9 });
+  
+  const rightPouch = new THREE.Mesh(pouchGeo, pouchMat);
+  rightPouch.position.set(0.18, -0.15, 0.22);
+  vest.add(rightPouch);
+
+  const leftPouch = new THREE.Mesh(pouchGeo, pouchMat);
+  leftPouch.position.set(-0.18, -0.15, 0.22);
+  vest.add(leftPouch);
+
+  // High-fidelity Tactical survival backpack (essential for realistic back view aesthetics)
+  const backpackGroup = new THREE.Group();
+  
+  const packGeo = new THREE.BoxGeometry(0.46, 0.48, 0.20);
+  const packMat = new THREE.MeshStandardMaterial({ map: camoUniformTex, roughness: 0.85 });
+  const backpackMain = new THREE.Mesh(packGeo, packMat);
+  backpackMain.position.set(0, 0.0, -0.25);
+  backpackMain.castShadow = true;
+  backpackGroup.add(backpackMain);
+
+  // Sleeping bag roll sleeping mat on top of back kit
+  const sleepRollGeo = new THREE.CylinderGeometry(0.1, 0.1, 0.46, 8);
+  const sleepRollMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.9 });
+  const sleepRoll = new THREE.Mesh(sleepRollGeo, sleepRollMat);
+  sleepRoll.rotation.z = Math.PI / 2;
+  sleepRoll.position.set(0, 0.28, -0.28);
+  backpackGroup.add(sleepRoll);
+
+  // Detailed radio transceiver communication antenna rod
+  const antennaGeo = new THREE.CylinderGeometry(0.012, 0.012, 0.65, 4);
+  const antennaMat = new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.9 });
+  const antenna = new THREE.Mesh(antennaGeo, antennaMat);
+  antenna.position.set(0.16, 0.3, -0.28);
+  backpackGroup.add(antenna);
+
+  // Active tiny red tactical status signal light beacon
+  const radioLightGeo = new THREE.SphereGeometry(0.03, 8, 8);
+  const radioLightMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+  const radioLight = new THREE.Mesh(radioLightGeo, radioLightMat);
+  radioLight.position.set(0.16, 0.62, -0.28);
+  backpackGroup.add(radioLight);
+
+  torso.add(backpackGroup);
+
+  // Elegant anatomical Neck
+  const neckGeo = new THREE.CylinderGeometry(0.12, 0.14, 0.16, 12);
+  const neckMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#fbcfe8'), roughness: 0.6 });
+  const neck = new THREE.Mesh(neckGeo, neckMat);
+  neck.position.y = 1.15;
+  group.add(neck);
+
+  // Human Spherical Head (replaces the box model for realism)
+  const headGeo = new THREE.SphereGeometry(0.18, 16, 16);
   const headMat = new THREE.MeshStandardMaterial({
-    color: new THREE.Color('#fbcfe8'), // skin flesh hex tone
-    roughness: 0.6
+    color: new THREE.Color('#fbcfe8'), // skin flesh tone
+    roughness: 0.55
   });
   const head = new THREE.Mesh(headGeo, headMat);
-  head.position.y = 1.3;
+  head.position.y = 1.34;
   head.castShadow = true;
   group.add(head);
 
-  // Military combat helmet
-  const helmetGeo = new THREE.BoxGeometry(0.38, 0.22, 0.38);
+  // Military combat helmets wrapping the head sphere
+  const helmetGeo = new THREE.SphereGeometry(0.20, 16, 16, 0, Math.PI * 2, 0, Math.PI / 1.7);
   const helmetMat = new THREE.MeshStandardMaterial({
-    color: isEnemy ? new THREE.Color('#18181b') : new THREE.Color('#0f172a'),
-    roughness: 0.8,
-    metalness: 0.1
+    color: isEnemy ? new THREE.Color('#1f2937') : new THREE.Color('#14532d'), // deep green/combat gray
+    roughness: 0.7,
+    metalness: 0.25
   });
   const helmet = new THREE.Mesh(helmetGeo, helmetMat);
-  helmet.position.set(0, 1.42, 0);
+  helmet.position.set(0, 1.34, 0);
+  helmet.rotation.x = -Math.PI / 25; // slightly forward tilt
   helmet.castShadow = true;
   group.add(helmet);
 
-  // High-tech glowing combat visor on helmet
+  // Goggles elastic strap going around head
+  const strapGeo = new THREE.CylinderGeometry(0.205, 0.205, 0.05, 12, 1, true);
+  const strapMat = new THREE.MeshStandardMaterial({ color: 0x09090b });
+  const strap = new THREE.Mesh(strapGeo, strapMat);
+  strap.position.set(0, 1.34, 0);
+  group.add(strap);
+
+  // High-tech glowing military HUD Visor / Tactical goggles
   const visorGeo = new THREE.BoxGeometry(0.28, 0.09, 0.08);
   const visorMat = new THREE.MeshStandardMaterial({
-    color: isEnemy ? new THREE.Color('#f43f5e') : new THREE.Color('#38bdf8'),
-    emissive: isEnemy ? new THREE.Color('#be123c') : new THREE.Color('#0284c7'),
-    metalness: 0.9,
-    roughness: 0.1
+    color: isEnemy ? new THREE.Color('#ef4444') : new THREE.Color('#06b6d4'),
+    emissive: isEnemy ? new THREE.Color('#991b1b') : new THREE.Color('#0891b2'),
+    metalness: 0.95,
+    roughness: 0.05
   });
   const visor = new THREE.Mesh(visorGeo, visorMat);
-  visor.position.set(0, 1.34, -0.16);
+  visor.position.set(0, 1.35, -0.17);
   group.add(visor);
 
-  // Shoulders plates
-  const shoulderPlateGeo = new THREE.BoxGeometry(0.2, 0.2, 0.2);
-  const shoulderPlateMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#334155'), roughness: 0.6 });
+  // Dual Night-Vision Goggles (NVG) scope mounts projecting forward (ultimate realism touch)
+  const nvgGroup = new THREE.Group();
+  nvgGroup.position.set(0, 1.45, -0.14);
+
+  const nvgPipeGeo = new THREE.BoxGeometry(0.06, 0.05, 0.14);
+  const nvgPipeMat = new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.8 });
+  const nvgPipe = new THREE.Mesh(nvgPipeGeo, nvgPipeMat);
+  nvgGroup.add(nvgPipe);
+
+  const nvgLensGeo = new THREE.CylinderGeometry(0.045, 0.04, 0.18, 8);
+  const nvgLensMat = new THREE.MeshStandardMaterial({
+    color: 0x22c55e,
+    emissive: 0x15803d,
+    roughness: 0.2
+  });
+
+  const leftLens = new THREE.Mesh(nvgLensGeo, nvgLensMat);
+  leftLens.rotation.x = Math.PI / 2;
+  leftLens.position.set(-0.08, -0.06, -0.12);
+  nvgGroup.add(leftLens);
+
+  const rightLens = new THREE.Mesh(nvgLensGeo, nvgLensMat);
+  rightLens.rotation.x = Math.PI / 2;
+  rightLens.position.set(0.08, -0.06, -0.12);
+  nvgGroup.add(rightLens);
+
+  helmet.add(nvgGroup);
+
+  // Joint plates / protectors (Shoulder plates & Knee-pads for realistic look)
+  const jointPadGeo = new THREE.BoxGeometry(0.2, 0.2, 0.2);
+  const jointPadMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#111827'), roughness: 0.7 });
 
   // Left Arm Group
   const leftArmGroup = new THREE.Group();
   leftArmGroup.position.set(-0.4, 1.05, 0);
   const armGeo = new THREE.BoxGeometry(0.15, 0.55, 0.15);
   const armMat = new THREE.MeshStandardMaterial({
-    color: isEnemy ? new THREE.Color('#ef4444') : new THREE.Color(skinHexColor),
-    roughness: 0.6
+    map: camoUniformTex,
+    roughness: 0.8
   });
   const leftArm = new THREE.Mesh(armGeo, armMat);
   leftArm.position.y = -0.25;
   leftArm.castShadow = true;
   leftArmGroup.add(leftArm);
 
-  const lPlate = new THREE.Mesh(shoulderPlateGeo, shoulderPlateMat);
-  lPlate.position.set(0, 0, 0);
+  const lPlate = new THREE.Mesh(jointPadGeo, jointPadMat);
+  lPlate.position.set(0, 0.05, 0);
+  lPlate.castShadow = true;
   leftArmGroup.add(lPlate);
   group.add(leftArmGroup);
 
-  // Right Arm Group (designed to raise weapon forward)
+  // Right Arm Group
   const rightArmGroup = new THREE.Group();
   rightArmGroup.position.set(0.4, 1.05, 0);
   const rightArm = new THREE.Mesh(armGeo, armMat);
@@ -119,15 +352,17 @@ function buildHumanoidSoldier(skinHexColor: string, isEnemy: boolean): HumanoidM
   rightArm.castShadow = true;
   rightArmGroup.add(rightArm);
 
-  const rPlate = new THREE.Mesh(shoulderPlateGeo, shoulderPlateMat);
-  rPlate.position.set(0, 0, 0);
+  const rPlate = new THREE.Mesh(jointPadGeo, jointPadMat);
+  rPlate.position.set(0, 0.05, 0);
+  rPlate.castShadow = true;
   rightArmGroup.add(rPlate);
   group.add(rightArmGroup);
 
-  // Legs and combat boots
+  // Legs and composite heavy combat boots with sole heels
   const legGeo = new THREE.BoxGeometry(0.16, 0.6, 0.16);
-  const bootGeo = new THREE.BoxGeometry(0.18, 0.12, 0.24);
-  const bootMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#18181b'), roughness: 0.9 });
+  const bootGeo = new THREE.BoxGeometry(0.19, 0.13, 0.26);
+  const bootMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#09090b'), roughness: 0.9 });
+  const kneePadGeo = new THREE.BoxGeometry(0.21, 0.13, 0.21);
 
   const leftLegGroup = new THREE.Group();
   leftLegGroup.position.set(-0.18, 0.45, 0);
@@ -135,6 +370,11 @@ function buildHumanoidSoldier(skinHexColor: string, isEnemy: boolean): HumanoidM
   leftLeg.position.y = -0.25;
   leftLeg.castShadow = true;
   leftLegGroup.add(leftLeg);
+
+  // Knee guard protector
+  const lKneePad = new THREE.Mesh(kneePadGeo, jointPadMat);
+  lKneePad.position.set(0, -0.25, 0.05);
+  leftLegGroup.add(lKneePad);
 
   const lBoot = new THREE.Mesh(bootGeo, bootMat);
   lBoot.position.set(0, -0.55, -0.04);
@@ -148,6 +388,11 @@ function buildHumanoidSoldier(skinHexColor: string, isEnemy: boolean): HumanoidM
   rightLeg.position.y = -0.25;
   rightLeg.castShadow = true;
   rightLegGroup.add(rightLeg);
+
+  // Knee guard protector
+  const rKneePad = new THREE.Mesh(kneePadGeo, jointPadMat);
+  rKneePad.position.set(0, -0.25, 0.05);
+  rightLegGroup.add(rKneePad);
 
   const rBoot = new THREE.Mesh(bootGeo, bootMat);
   rBoot.position.set(0, -0.55, -0.04);
@@ -229,6 +474,118 @@ function buildDetailedGun(weaponColor: string): THREE.Group {
   gunGroup.add(handle);
 
   return gunGroup;
+}
+
+// Procedurally constructs hyper-realistic warfare objects for high-fidelity battlefield immersion
+function buildTacticalObstacle(type: 'pillar' | 'barrel' | 'container', colorHex: string): THREE.Group {
+  const obstacleGroup = new THREE.Group();
+  const rustTex = createProceduralRustTexture(colorHex);
+
+  if (type === 'pillar') {
+    // 1. Broken concrete column ruins with vertical core grooves & reinforcement rebar wire
+    const coreGeo = new THREE.CylinderGeometry(1.0, 1.1, 7.0, 10);
+    const coreMat = new THREE.MeshStandardMaterial({
+      map: rustTex,
+      roughness: 0.9,
+      metalness: 0.1
+    });
+    const core = new THREE.Mesh(coreGeo, coreMat);
+    core.castShadow = true;
+    core.receiveShadow = true;
+    obstacleGroup.add(core);
+
+    // Add 3 steel rebar wires sticking out of the broken top for ultimate realism
+    const wireGeo = new THREE.CylinderGeometry(0.04, 0.04, 1.2, 4);
+    const wireMat = new THREE.MeshStandardMaterial({ color: 0x374151, metalness: 0.95, roughness: 0.2 });
+    
+    for (let r = 0; r < 3; r++) {
+      const wire = new THREE.Mesh(wireGeo, wireMat);
+      const angle = (r / 3) * Math.PI * 2;
+      wire.position.set(Math.cos(angle) * 0.4, 3.8, Math.sin(angle) * 0.4);
+      wire.rotation.z = (Math.random() - 0.5) * 0.3; // bent wire Look
+      wire.rotation.x = (Math.random() - 0.5) * 0.3;
+      obstacleGroup.add(wire);
+    }
+  } else if (type === 'barrel') {
+    // 2. Industrial petroleum chemical fuel barrel with structural reinforcement rings
+    const barrelGeo = new THREE.CylinderGeometry(0.8, 0.8, 2.4, 12);
+    const barrelMat = new THREE.MeshStandardMaterial({
+      map: rustTex,
+      metalness: 0.75,
+      roughness: 0.3
+    });
+    const mainBarrel = new THREE.Mesh(barrelGeo, barrelMat);
+    mainBarrel.castShadow = true;
+    mainBarrel.receiveShadow = true;
+    obstacleGroup.add(mainBarrel);
+
+    // Reinforcement metal banding rings around the barrel
+    const ringGeo = new THREE.CylinderGeometry(0.84, 0.84, 0.08, 12, 1, true);
+    const ringMat = new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.9, roughness: 0.4 });
+    
+    const ring1 = new THREE.Mesh(ringGeo, ringMat);
+    ring1.position.y = 0.6;
+    mainBarrel.add(ring1);
+
+    const ring2 = new THREE.Mesh(ringGeo, ringMat);
+    ring2.position.y = -0.6;
+    mainBarrel.add(ring2);
+
+    // Hazard skull yellow/black caution stripes detail
+    const stripeGeo = new THREE.CylinderGeometry(0.81, 0.81, 0.4, 12, 1, true);
+    const stripeMat = new THREE.MeshStandardMaterial({ color: 0xeab308, roughness: 0.6 }); // yellow stripe
+    const stripe = new THREE.Mesh(stripeGeo, stripeMat);
+    stripe.position.y = 0;
+    mainBarrel.add(stripe);
+
+    // Hazard bio-hazard glow indicator
+    const glowGeo = new THREE.SphereGeometry(0.12, 8, 8);
+    const glowMat = new THREE.MeshBasicMaterial({ color: 0x22c55e }); // glowing green sludge indicator
+    const glow = new THREE.Mesh(glowGeo, glowMat);
+    glow.position.set(0, 0.82, 0);
+    mainBarrel.add(glow);
+
+  } else {
+    // 3. Heavy steel military shipping supply cargo container with vertical metal siding ridges
+    const baseBoxGeo = new THREE.BoxGeometry(4.0, 3.2, 4.0);
+    const baseBoxMat = new THREE.MeshStandardMaterial({
+      map: rustTex,
+      roughness: 0.75,
+      metalness: 0.5
+    });
+    const container = new THREE.Mesh(baseBoxGeo, baseBoxMat);
+    container.castShadow = true;
+    container.receiveShadow = true;
+    obstacleGroup.add(container);
+
+    // Build vertical metal structural sidetrack ridges on all 4 sides for realistic siding
+    const ridgeGeo = new THREE.BoxGeometry(0.08, 3.12, 0.08);
+    const ridgeMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.8, roughness: 0.5 });
+    
+    // Front and back ridges
+    for (let f = -1.8; f <= 1.8; f += 0.6) {
+      const ridgeFront = new THREE.Mesh(ridgeGeo, ridgeMat);
+      ridgeFront.position.set(f, 0, 2.02);
+      container.add(ridgeFront);
+
+      const ridgeBack = new THREE.Mesh(ridgeGeo, ridgeMat);
+      ridgeBack.position.set(f, 0, -2.02);
+      container.add(ridgeBack);
+    }
+
+    // Left and right ridges
+    for (let s = -1.8; s <= 1.8; s += 0.6) {
+      const ridgeLeft = new THREE.Mesh(ridgeGeo, ridgeMat);
+      ridgeLeft.position.set(-2.02, 0, s);
+      container.add(ridgeLeft);
+
+      const ridgeRight = new THREE.Mesh(ridgeGeo, ridgeMat);
+      ridgeRight.position.set(2.02, 0, s);
+      container.add(ridgeRight);
+    }
+  }
+
+  return obstacleGroup;
 }
 
 export default function Battlefield({
@@ -359,12 +716,13 @@ export default function Battlefield({
     spotLight.penumbra = 0.15;
     scene.add(spotLight);
 
-    // 5. Build Desert Ground Plane
+    // 5. Build High-Fidelity Textured Ground Plane
     const groundGeo = new THREE.PlaneGeometry(activeMap.groundSize, activeMap.groundSize);
+    const groundTexture = createProceduralGroundTexture(activeMap.id, activeMap.primaryColor);
     const groundMat = new THREE.MeshStandardMaterial({
-      color: new THREE.Color(activeMap.primaryColor),
-      roughness: 0.85,
-      metalness: 0.1
+      map: groundTexture,
+      roughness: 0.9,
+      metalness: 0.15
     });
     const ground = new THREE.Mesh(groundGeo, groundMat);
     ground.rotation.x = -Math.PI / 2;
@@ -376,13 +734,40 @@ export default function Battlefield({
     grid.position.y = 0.01;
     scene.add(grid);
 
-    // 6. Spawn Colliders Obstacles & Columns
+    // Real atmospheric wind particles (Desert dust storm, city ashes, green forest spores)
+    const windParticles: { mesh: THREE.Mesh; speedX: number; speedY: number; speedZ: number }[] = [];
+    const particleGeo = new THREE.DodecahedronGeometry(0.12, 0);
+    const particleColor = activeMap.id === 'desert' ? '#d97706' : activeMap.id === 'city' ? '#9ca3af' : '#14532d';
+    const particleMat = new THREE.MeshBasicMaterial({
+      color: new THREE.Color(particleColor),
+      transparent: true,
+      opacity: 0.35
+    });
+
+    for (let p = 0; p < 130; p++) {
+      const pm = new THREE.Mesh(particleGeo, particleMat);
+      pm.position.set(
+        (Math.random() - 0.5) * activeMap.groundSize,
+        Math.random() * 8 + 0.1,
+        (Math.random() - 0.5) * activeMap.groundSize
+      );
+      scene.add(pm);
+      windParticles.push({
+        mesh: pm,
+        speedX: (Math.random() - 0.5) * 0.08 - 0.03, // steady drift direction
+        speedY: (Math.random() - 0.5) * 0.02,
+        speedZ: (Math.random() - 0.5) * 0.08 - 0.02
+      });
+    }
+
+    // 6. Spawn Colliders Obstacles (Pillars, Barrels & Ridged Containers)
     const colliders: THREE.Box3[] = [];
-    const obstacleMeshes: THREE.Mesh[] = [];
+    const obstacleMeshes: THREE.Object3D[] = [];
     
     const addBoundaryWall = (x: number, z: number, w: number, depth: number) => {
       const geo = new THREE.BoxGeometry(w, 5, depth);
-      const mat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.95 });
+      const boundaryTexture = createProceduralCamoTexture('#0f172a', '#020617', '#1e293b');
+      const mat = new THREE.MeshStandardMaterial({ map: boundaryTexture, roughness: 0.95 });
       const wall = new THREE.Mesh(geo, mat);
       wall.position.set(x, 2.5, z);
       scene.add(wall);
@@ -394,21 +779,12 @@ export default function Battlefield({
     addBoundaryWall(0, halfSize, activeMap.groundSize, 2);
     addBoundaryWall(-halfSize, 0, 2, activeMap.groundSize);
     addBoundaryWall(halfSize, 0, 2, activeMap.groundSize);
-
-    const boxObstacleGeo = new THREE.BoxGeometry(3.2, 3.2, 3.2);
-    const pillarObstacleGeo = new THREE.CylinderGeometry(1.2, 1.2, 7, 10);
     
     for (let s = 0; s < activeMap.obstaclesCount; s++) {
-      const isPillar = s % 3 === 0;
-      const mat = new THREE.MeshStandardMaterial({
-        color: new THREE.Color(activeMap.obstacleColor),
-        roughness: 0.75,
-        metalness: 0.15
-      });
+      // Determine what high-fidelity obstacle to spawn
+      const obsType = s % 3 === 0 ? 'pillar' : s % 3 === 1 ? 'barrel' : 'container';
       
-      const mesh = new THREE.Mesh(isPillar ? pillarObstacleGeo : boxObstacleGeo, mat);
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
+      const mesh = buildTacticalObstacle(obsType, activeMap.obstacleColor);
       
       let x = (Math.random() - 0.5) * (activeMap.groundSize - 18);
       let z = (Math.random() - 0.5) * (activeMap.groundSize - 18);
@@ -418,7 +794,12 @@ export default function Battlefield({
         z = z > 0 ? z + 10 : z - 10;
       }
       
-      mesh.position.set(x, isPillar ? 3.5 : 1.6, z);
+      // Compute coordinate base height based on the obstacle geometry
+      mesh.position.set(x, obsType === 'pillar' ? 3.5 : obsType === 'barrel' ? 1.2 : 1.6, z);
+      
+      // Random rotation values for high-fidelity broken debris looking layout
+      mesh.rotation.y = Math.random() * Math.PI * 2;
+      
       scene.add(mesh);
       obstacleMeshes.push(mesh);
       colliders.push(new THREE.Box3().setFromObject(mesh));
@@ -744,6 +1125,24 @@ export default function Battlefield({
 
       // Sync character aim look rotations
       playerGroup.rotation.y = stateRef.current.lookAngle;
+
+      // Update wind-borne ambient dust/sand/leaf storm simulation
+      windParticles.forEach(p => {
+        p.mesh.position.x += p.speedX;
+        p.mesh.position.y += p.speedY;
+        p.mesh.position.z += p.speedZ;
+        
+        // Loop recycling
+        if (p.mesh.position.y < 0.1 || p.mesh.position.y > 8.0) {
+          p.mesh.position.y = 8.0;
+        }
+        if (Math.abs(p.mesh.position.x) > activeMap.groundSize / 2) {
+          p.mesh.position.x = -p.mesh.position.x;
+        }
+        if (Math.abs(p.mesh.position.z) > activeMap.groundSize / 2) {
+          p.mesh.position.z = -p.mesh.position.z;
+        }
+      });
 
       // Swing civilian/soldier limbs dynamic walk cycles
       const walkCycle = isMoving ? Math.sin(performance.now() * 0.012) * 0.55 : 0;

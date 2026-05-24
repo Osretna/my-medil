@@ -1,0 +1,23 @@
+{
+  "short_name": "حرب التكتيكية",
+  "name": "حرب التكتيكات العسكرية ثلاثية الأبعاد",
+  "icons": [
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#091428",
+  "theme_color": "#4f46e5",
+  "display": "standalone",
+  "orientation": "landscape"
+}
