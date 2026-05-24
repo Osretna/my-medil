@@ -1,0 +1,89 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Help Helper definitions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        request.auth.token.email == "nesmanagah53@gmail.com"
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Admins helper collection (only readable/writeable by existing admins or our owner nesmanagah53@gmail.com)
+    match /admins/{adminId} {
+      allow read: if isSignedIn() && (isOwner(adminId) || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    // Players Collection Rules
+    match /players/{playerId} {
+      allow get: if isSignedIn() && (isOwner(playerId) || isAdmin());
+      allow list: if isAdmin(); // only admins can scan all players
+      
+      allow create: if isSignedIn() && isOwner(playerId) &&
+        request.resource.data.id == playerId &&
+        request.resource.data.email == request.auth.token.email &&
+        request.resource.data.level == 1 &&
+        request.resource.data.xp == 0 &&
+        request.resource.data.kills == 0 &&
+        request.resource.data.deaths == 0 &&
+        request.resource.data.coins == 0 &&
+        request.resource.data.keys().hasAll(['id', 'displayName', 'email', 'level', 'xp', 'kills', 'deaths', 'coins', 'selectedSkin', 'selectedWeapon']) &&
+        request.resource.data.keys().size() <= 14;
+
+      allow update: if isSignedIn() && (
+        isAdmin() || 
+        (
+          isOwner(playerId) &&
+          request.resource.data.id == resource.data.id &&
+          request.resource.data.email == resource.data.email &&
+          // Players cannot directly give themselves free coins or change their role
+          (
+            request.resource.data.coins == resource.data.coins || 
+            // Only coin adjustment through gameplay is checked, let's keep it safe
+            request.resource.data.coins <= resource.data.coins + 50 // Limit gameplay reward increment
+          ) &&
+          (!request.resource.data.keys().hasAny(['role']) || request.resource.data.role == resource.data.role)
+        )
+      );
+
+      allow delete: if isAdmin();
+    }
+
+    // Transactions / Packages Collection Rules
+    match /transactions/{transactionId} {
+      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+
+      allow create: if isSignedIn() &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.userEmail == request.auth.token.email &&
+        request.resource.data.status == 'pending' &&
+        request.resource.data.amountEGP >= 50 &&
+        request.resource.data.amountEGP <= 500 &&
+        request.resource.data.keys().hasAll(['id', 'userId', 'userEmail', 'amountEGP', 'coinsGranted', 'status', 'createdAt']) &&
+        request.resource.data.keys().size() <= 12;
+
+      allow update: if isAdmin(); // Only admins can approve or reject a transaction
+      allow delete: if isAdmin();
+    }
+  }
+}

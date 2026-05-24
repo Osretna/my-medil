@@ -1,0 +1,54 @@
+{
+  "entities": {
+    "players": {
+      "title": "Player",
+      "description": "Information about a player in the 3D War Game",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "User UID from Firebase Auth" },
+        "displayName": { "type": "string", "description": "Display name of the player" },
+        "email": { "type": "string", "description": "Gmail email address" },
+        "level": { "type": "integer", "description": "Current player level" },
+        "xp": { "type": "integer", "description": "Current Experience Points" },
+        "kills": { "type": "integer", "description": "Total enemies killed" },
+        "deaths": { "type": "integer", "description": "Total deaths in combat" },
+        "coins": { "type": "integer", "description": "Coins balance derived from packages / gameplay" },
+        "selectedSkin": { "type": "string", "description": "Currently active cosmetic skin ID" },
+        "selectedWeapon": { "type": "string", "description": "Currently equipped weapon ID" },
+        "unlockedSkins": { "type": "array", "description": "List of unlocked skin IDs" },
+        "unlockedWeapons": { "type": "array", "description": "List of unlocked weapon IDs" },
+        "role": { "type": "string", "enum": ["player", "admin"], "description": "User role: player or admin" },
+        "lastOnline": { "type": "string", "format": "date-time", "description": "Last active timestamp" }
+      },
+      "required": ["id", "displayName", "email", "level", "xp", "kills", "deaths", "coins", "selectedSkin", "selectedWeapon"]
+    },
+    "transactions": {
+      "title": "Transaction",
+      "description": "Recharge details for EGP packages sent via InstaPay",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique transaction key" },
+        "userId": { "type": "string", "description": "User UID who made the purchase" },
+        "userEmail": { "type": "string", "description": "User email who made the purchase" },
+        "amountEGP": { "type": "integer", "description": "EGP value from 50 to 500" },
+        "coinsGranted": { "type": "integer", "description": "Equivalent gold coins granted on approval" },
+        "instapayPhone": { "type": "string", "description": "Target phone number payment was sent to" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"], "description": "Approval status of the WhatsApp transaction" },
+        "whatsappRef": { "type": "string", "description": "Optional WhatsApp verification note or screenshot ID" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp" },
+        "approvedAt": { "type": "string", "format": "date-time", "description": "Approval timestamp" }
+      },
+      "required": ["id", "userId", "userEmail", "amountEGP", "coinsGranted", "status", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/players/{playerId}": {
+      "schema": "players",
+      "description": "User profiles and in-game statistics"
+    },
+    "/transactions/{transactionId}": {
+      "schema": "transactions",
+      "description": "Charging records for WhatsApp InstaPay payments"
+    }
+  }
+}

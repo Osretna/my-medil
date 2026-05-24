@@ -1,0 +1,6 @@
+{
+  "name": "لعبة الحرب ثلاثية الأبعاد",
+  "description": "لعبة حرب قتالية شيقة ثلاثية الأبعاد بأسلحة ودروع تكتيكية مع خيارات شحن آمن عبر انستا باي ولوحة تحكم مشرف مدمجة",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
