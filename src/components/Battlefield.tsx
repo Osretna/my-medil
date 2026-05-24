@@ -13,6 +13,224 @@ interface BattlefieldProps {
   onExit: () => void;
 }
 
+interface HumanoidModel {
+  group: THREE.Group;
+  leftLegGroup: THREE.Group;
+  rightLegGroup: THREE.Group;
+  leftArmGroup: THREE.Group;
+  rightArmGroup: THREE.Group;
+  head: THREE.Mesh;
+  helmet: THREE.Mesh;
+  visor: THREE.Mesh;
+  torso: THREE.Mesh;
+}
+
+// Procedural detailed humanoid soldier builder
+function buildHumanoidSoldier(skinHexColor: string, isEnemy: boolean): HumanoidModel {
+  const group = new THREE.Group();
+
+  // Torso / tactical mesh
+  const torsoGeo = new THREE.BoxGeometry(0.55, 0.75, 0.35);
+  const torsoMat = new THREE.MeshStandardMaterial({
+    color: isEnemy ? new THREE.Color('#991b1b') : new THREE.Color(skinHexColor),
+    roughness: 0.5,
+    metalness: 0.2
+  });
+  const torso = new THREE.Mesh(torsoGeo, torsoMat);
+  torso.position.y = 0.8;
+  torso.castShadow = true;
+  torso.receiveShadow = true;
+  group.add(torso);
+
+  // Tactical combat vest on top of torso
+  const vestGeo = new THREE.BoxGeometry(0.61, 0.55, 0.41);
+  const vestMat = new THREE.MeshStandardMaterial({
+    color: isEnemy ? new THREE.Color('#450a0a') : new THREE.Color('#1e293b'),
+    roughness: 0.7,
+    metalness: 0.15
+  });
+  const vest = new THREE.Mesh(vestGeo, vestMat);
+  vest.position.y = 0.0;
+  vest.castShadow = true;
+  torso.add(vest);
+
+  // Soldier head
+  const headGeo = new THREE.BoxGeometry(0.32, 0.32, 0.32);
+  const headMat = new THREE.MeshStandardMaterial({
+    color: new THREE.Color('#fbcfe8'), // skin flesh hex tone
+    roughness: 0.6
+  });
+  const head = new THREE.Mesh(headGeo, headMat);
+  head.position.y = 1.3;
+  head.castShadow = true;
+  group.add(head);
+
+  // Military combat helmet
+  const helmetGeo = new THREE.BoxGeometry(0.38, 0.22, 0.38);
+  const helmetMat = new THREE.MeshStandardMaterial({
+    color: isEnemy ? new THREE.Color('#18181b') : new THREE.Color('#0f172a'),
+    roughness: 0.8,
+    metalness: 0.1
+  });
+  const helmet = new THREE.Mesh(helmetGeo, helmetMat);
+  helmet.position.set(0, 1.42, 0);
+  helmet.castShadow = true;
+  group.add(helmet);
+
+  // High-tech glowing combat visor on helmet
+  const visorGeo = new THREE.BoxGeometry(0.28, 0.09, 0.08);
+  const visorMat = new THREE.MeshStandardMaterial({
+    color: isEnemy ? new THREE.Color('#f43f5e') : new THREE.Color('#38bdf8'),
+    emissive: isEnemy ? new THREE.Color('#be123c') : new THREE.Color('#0284c7'),
+    metalness: 0.9,
+    roughness: 0.1
+  });
+  const visor = new THREE.Mesh(visorGeo, visorMat);
+  visor.position.set(0, 1.34, -0.16);
+  group.add(visor);
+
+  // Shoulders plates
+  const shoulderPlateGeo = new THREE.BoxGeometry(0.2, 0.2, 0.2);
+  const shoulderPlateMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#334155'), roughness: 0.6 });
+
+  // Left Arm Group
+  const leftArmGroup = new THREE.Group();
+  leftArmGroup.position.set(-0.4, 1.05, 0);
+  const armGeo = new THREE.BoxGeometry(0.15, 0.55, 0.15);
+  const armMat = new THREE.MeshStandardMaterial({
+    color: isEnemy ? new THREE.Color('#ef4444') : new THREE.Color(skinHexColor),
+    roughness: 0.6
+  });
+  const leftArm = new THREE.Mesh(armGeo, armMat);
+  leftArm.position.y = -0.25;
+  leftArm.castShadow = true;
+  leftArmGroup.add(leftArm);
+
+  const lPlate = new THREE.Mesh(shoulderPlateGeo, shoulderPlateMat);
+  lPlate.position.set(0, 0, 0);
+  leftArmGroup.add(lPlate);
+  group.add(leftArmGroup);
+
+  // Right Arm Group (designed to raise weapon forward)
+  const rightArmGroup = new THREE.Group();
+  rightArmGroup.position.set(0.4, 1.05, 0);
+  const rightArm = new THREE.Mesh(armGeo, armMat);
+  rightArm.position.y = -0.25;
+  rightArm.castShadow = true;
+  rightArmGroup.add(rightArm);
+
+  const rPlate = new THREE.Mesh(shoulderPlateGeo, shoulderPlateMat);
+  rPlate.position.set(0, 0, 0);
+  rightArmGroup.add(rPlate);
+  group.add(rightArmGroup);
+
+  // Legs and combat boots
+  const legGeo = new THREE.BoxGeometry(0.16, 0.6, 0.16);
+  const bootGeo = new THREE.BoxGeometry(0.18, 0.12, 0.24);
+  const bootMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#18181b'), roughness: 0.9 });
+
+  const leftLegGroup = new THREE.Group();
+  leftLegGroup.position.set(-0.18, 0.45, 0);
+  const leftLeg = new THREE.Mesh(legGeo, armMat);
+  leftLeg.position.y = -0.25;
+  leftLeg.castShadow = true;
+  leftLegGroup.add(leftLeg);
+
+  const lBoot = new THREE.Mesh(bootGeo, bootMat);
+  lBoot.position.set(0, -0.55, -0.04);
+  lBoot.castShadow = true;
+  leftLegGroup.add(lBoot);
+  group.add(leftLegGroup);
+
+  const rightLegGroup = new THREE.Group();
+  rightLegGroup.position.set(0.18, 0.45, 0);
+  const rightLeg = new THREE.Mesh(legGeo, armMat);
+  rightLeg.position.y = -0.25;
+  rightLeg.castShadow = true;
+  rightLegGroup.add(rightLeg);
+
+  const rBoot = new THREE.Mesh(bootGeo, bootMat);
+  rBoot.position.set(0, -0.55, -0.04);
+  rBoot.castShadow = true;
+  rightLegGroup.add(rBoot);
+  group.add(rightLegGroup);
+
+  return {
+    group,
+    leftLegGroup,
+    rightLegGroup,
+    leftArmGroup,
+    rightArmGroup,
+    head,
+    helmet,
+    visor,
+    torso
+  };
+}
+
+// Procedural detailed mechanical weapon builder
+function buildDetailedGun(weaponColor: string): THREE.Group {
+  const gunGroup = new THREE.Group();
+  
+  // Tactical main rifle body frame
+  const frameGeo = new THREE.BoxGeometry(0.1, 0.16, 0.7);
+  const frameMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#27272a'), metalness: 0.8, roughness: 0.35 });
+  const frame = new THREE.Mesh(frameGeo, frameMat);
+  frame.castShadow = true;
+  gunGroup.add(frame);
+  
+  // Custom colored accent shroud/handguard cover matching shop selection color
+  const shroudGeo = new THREE.BoxGeometry(0.12, 0.13, 0.4);
+  const shroudMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(weaponColor), metalness: 0.65, roughness: 0.2 });
+  const shroud = new THREE.Mesh(shroudGeo, shroudMat);
+  shroud.position.set(0, 0.01, -0.15);
+  shroud.castShadow = true;
+  gunGroup.add(shroud);
+
+  // Extended barrel tube
+  const barrelGeo = new THREE.CylinderGeometry(0.024, 0.024, 0.45, 8);
+  const barrelMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#18181b'), metalness: 0.9, roughness: 0.1 });
+  const barrel = new THREE.Mesh(barrelGeo, barrelMat);
+  barrel.rotation.x = Math.PI / 2;
+  barrel.position.set(0, 0.03, -0.42);
+  barrel.castShadow = true;
+  gunGroup.add(barrel);
+
+  // Curved magazine/clip
+  const magGeo = new THREE.BoxGeometry(0.07, 0.26, 0.14);
+  const magMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#1e1b4b'), metalness: 0.7, roughness: 0.4 });
+  const mag = new THREE.Mesh(magGeo, magMat);
+  mag.position.set(0, -0.15, -0.05);
+  mag.rotation.x = -Math.PI / 10;
+  mag.castShadow = true;
+  gunGroup.add(mag);
+
+  // Scope sights
+  const scopeGeo = new THREE.CylinderGeometry(0.032, 0.032, 0.25, 8);
+  const scopeMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#3f3f46'), metalness: 0.8, roughness: 0.2 });
+  const scope = new THREE.Mesh(scopeGeo, scopeMat);
+  scope.rotation.x = Math.PI / 2;
+  scope.position.set(0, 0.12, -0.05);
+  scope.castShadow = true;
+  gunGroup.add(scope);
+
+  // Holographic lens glowing ring
+  const lensGeo = new THREE.CircleGeometry(0.028, 8);
+  const lensMat = new THREE.MeshBasicMaterial({ color: new THREE.Color('#22c55e') });
+  const lens = new THREE.Mesh(lensGeo, lensMat);
+  lens.position.set(0, 0.12, -0.18);
+  gunGroup.add(lens);
+
+  // Ergonomic gun handle
+  const handleGeo = new THREE.BoxGeometry(0.07, 0.18, 0.07);
+  const handle = new THREE.Mesh(handleGeo, frameMat);
+  handle.position.set(0, -0.12, 0.18);
+  handle.rotation.x = Math.PI / 5;
+  gunGroup.add(handle);
+
+  return gunGroup;
+}
+
 export default function Battlefield({
   activeMap,
   equippedWeapon,
@@ -35,13 +253,16 @@ export default function Battlefield({
   const [readyCountdown, setReadyCountdown] = useState(3);
   const [gameStarted, setGameStarted] = useState(false);
   
-  // Touch joystick tracking for responsive mobile play
+  // Touch movements & aim trackpad systems bypass stale closures using state refs completely!
   const [touchMoving, setTouchMoving] = useState(false);
   const joystickCenter = useRef({ x: 0, y: 0 });
   const joystickCurrent = useRef({ x: 0, y: 0 });
-  const joystickValue = useRef({ x: 0, y: 0 }); // -1 to 1
+  const joystickValue = useRef({ x: 0, y: 0 });
 
-  // References to keep loop sync
+  const lastAimTouchX = useRef(0);
+  const isAimTouching = useRef(false);
+
+  // Single unified operational reference dictionary to avoid closure pitfalls
   const stateRef = useRef({
     health: 100,
     ammo: equippedWeapon.ammoCapacity,
@@ -50,18 +271,21 @@ export default function Battlefield({
     wave: 1,
     time: 0,
     keys: { w: false, a: false, s: false, d: false, Space: false },
-    lookAngle: 0, // angular rotation
+    lookAngle: 0,
     playerPos: new THREE.Vector3(0, 0.8, 0),
-    speed: 0.15
+    speed: 0.15,
+    touchMoving: false,
+    joystickX: 0,
+    joystickY: 0
   });
 
-  // Keep weapon in sync in ref
+  // Hot swap reloads/weapon state changes
   useEffect(() => {
     stateRef.current.ammo = equippedWeapon.ammoCapacity;
     setAmmo(equippedWeapon.ammoCapacity);
   }, [equippedWeapon]);
 
-  // Handle countdown before battle starts
+  // Handle countdown sequences
   useEffect(() => {
     if (readyCountdown > 0) {
       const timer = setTimeout(() => {
@@ -74,7 +298,7 @@ export default function Battlefield({
     }
   }, [readyCountdown]);
 
-  // Game timer clock
+  // Main game stopwatch
   useEffect(() => {
     if (!gameStarted || gameOver || gameWon) return;
     const interval = setInterval(() => {
@@ -87,23 +311,23 @@ export default function Battlefield({
     return () => clearInterval(interval);
   }, [gameStarted, gameOver, gameWon]);
 
-  // Core Game loop and Three.js initialization
+  // Core 3D engine and game pipeline
   useEffect(() => {
     if (!gameStarted || gameOver || gameWon || !containerRef.current) return;
 
     const width = containerRef.current.clientWidth || window.innerWidth;
-    const height = containerRef.current.clientHeight || 500;
+    const height = containerRef.current.clientHeight || window.innerHeight;
 
-    // 1. Create Scene & Ambient Fog matching the Map selection
+    // 1. Create Scene & Atmospheric Fogs based on Map Colors
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(activeMap.primaryColor);
-    scene.fog = new THREE.FogExp2(activeMap.fogColor, 0.04);
+    scene.fog = new THREE.FogExp2(activeMap.fogColor, 0.035);
 
     // 2. Camera setup
-    const camera = new THREE.PerspectiveCamera(65, width / height, 0.1, 1000);
-    camera.position.set(0, 10, 12); // Initial angled follow view
+    const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
+    camera.position.set(0, 12, 14);
 
-    // 3. Renderer
+    // 3. Renderer configuration
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     renderer.setSize(width, height);
     renderer.shadowMap.enabled = true;
@@ -111,35 +335,35 @@ export default function Battlefield({
     containerRef.current.appendChild(renderer.domElement);
 
     // 4. Lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.55);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
     scene.add(ambientLight);
 
-    const sunLight = new THREE.DirectionalLight(0xfffbeb, 1.25);
-    sunLight.position.set(40, 100, 20);
+    const sunLight = new THREE.DirectionalLight(0xfffbeb, 1.4);
+    sunLight.position.set(50, 110, 30);
     sunLight.castShadow = true;
     sunLight.shadow.mapSize.width = 1024;
     sunLight.shadow.mapSize.height = 1024;
     sunLight.shadow.camera.near = 0.5;
-    sunLight.shadow.camera.far = 250;
-    const d = 50;
+    sunLight.shadow.camera.far = 280;
+    const d = 60;
     sunLight.shadow.camera.left = -d;
     sunLight.shadow.camera.right = d;
     sunLight.shadow.camera.top = d;
     sunLight.shadow.camera.bottom = -d;
     scene.add(sunLight);
 
-    // Add extra tactical directional spotlight
-    const spotLight = new THREE.SpotLight(0xffffff, 0.8);
-    spotLight.position.set(0, 40, 0);
+    // Dynamic ceiling spot highlight
+    const spotLight = new THREE.SpotLight(0xffffff, 0.82);
+    spotLight.position.set(0, 50, 0);
     spotLight.angle = Math.PI / 4;
-    spotLight.penumbra = 0.1;
+    spotLight.penumbra = 0.15;
     scene.add(spotLight);
 
-    // 5. Ground Plane
+    // 5. Build Desert Ground Plane
     const groundGeo = new THREE.PlaneGeometry(activeMap.groundSize, activeMap.groundSize);
     const groundMat = new THREE.MeshStandardMaterial({
       color: new THREE.Color(activeMap.primaryColor),
-      roughness: 0.8,
+      roughness: 0.85,
       metalness: 0.1
     });
     const ground = new THREE.Mesh(groundGeo, groundMat);
@@ -147,109 +371,80 @@ export default function Battlefield({
     ground.receiveShadow = true;
     scene.add(ground);
 
-    // Add ground grid markings to clarify movement
-    const grid = new THREE.GridHelper(activeMap.groundSize, activeMap.groundSize / 3, 0xff0000, 0x444444);
+    // Tactical grids
+    const grid = new THREE.GridHelper(activeMap.groundSize, activeMap.groundSize / 4, 0xef4444, 0x334155);
     grid.position.y = 0.01;
     scene.add(grid);
 
-    // 6. Spawn Collidable Obstacles (Crater blocks / ruins)
+    // 6. Spawn Colliders Obstacles & Columns
     const colliders: THREE.Box3[] = [];
     const obstacleMeshes: THREE.Mesh[] = [];
     
-    // Boundary walls
-    const addBoundary = (x: number, z: number, w: number, d: number) => {
-      const geo = new THREE.BoxGeometry(w, 4, d);
-      const mat = new THREE.MeshStandardMaterial({ color: 0x1f2937, roughness: 0.9 });
+    const addBoundaryWall = (x: number, z: number, w: number, depth: number) => {
+      const geo = new THREE.BoxGeometry(w, 5, depth);
+      const mat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.95 });
       const wall = new THREE.Mesh(geo, mat);
-      wall.position.set(x, 2, z);
+      wall.position.set(x, 2.5, z);
       scene.add(wall);
       colliders.push(new THREE.Box3().setFromObject(wall));
     };
 
     const halfSize = activeMap.groundSize / 2;
-    addBoundary(0, -halfSize, activeMap.groundSize, 1.5);
-    addBoundary(0, halfSize, activeMap.groundSize, 1.5);
-    addBoundary(-halfSize, 0, 1.5, activeMap.groundSize);
-    addBoundary(halfSize, 0, 1.5, activeMap.groundSize);
+    addBoundaryWall(0, -halfSize, activeMap.groundSize, 2);
+    addBoundaryWall(0, halfSize, activeMap.groundSize, 2);
+    addBoundaryWall(-halfSize, 0, 2, activeMap.groundSize);
+    addBoundaryWall(halfSize, 0, 2, activeMap.groundSize);
 
-    // Random blocks based on map settings (seeded simple)
-    const obsGeo = new THREE.BoxGeometry(3, 3, 3);
-    const pillarGeo = new THREE.CylinderGeometry(1, 1, 6, 8);
+    const boxObstacleGeo = new THREE.BoxGeometry(3.2, 3.2, 3.2);
+    const pillarObstacleGeo = new THREE.CylinderGeometry(1.2, 1.2, 7, 10);
     
-    for (let i = 0; i < activeMap.obstaclesCount; i++) {
-      const isPillar = i % 3 === 0;
+    for (let s = 0; s < activeMap.obstaclesCount; s++) {
+      const isPillar = s % 3 === 0;
       const mat = new THREE.MeshStandardMaterial({
         color: new THREE.Color(activeMap.obstacleColor),
-        roughness: 0.7,
-        metalness: 0.1
+        roughness: 0.75,
+        metalness: 0.15
       });
       
-      const mesh = new THREE.Mesh(isPillar ? pillarGeo : obsGeo, mat);
+      const mesh = new THREE.Mesh(isPillar ? pillarObstacleGeo : boxObstacleGeo, mat);
       mesh.castShadow = true;
       mesh.receiveShadow = true;
       
-      // Prevent spawning right at the center (spawn zone)
-      let x = (Math.random() - 0.5) * (activeMap.groundSize - 15);
-      let z = (Math.random() - 0.5) * (activeMap.groundSize - 15);
-      if (Math.abs(x) < 8 && Math.abs(z) < 8) {
-        x = x > 0 ? x + 8 : x - 8;
-        z = z > 0 ? z + 8 : z - 8;
+      let x = (Math.random() - 0.5) * (activeMap.groundSize - 18);
+      let z = (Math.random() - 0.5) * (activeMap.groundSize - 18);
+      // Spawn-protection zone around center
+      if (Math.abs(x) < 10 && Math.abs(z) < 10) {
+        x = x > 0 ? x + 10 : x - 10;
+        z = z > 0 ? z + 10 : z - 10;
       }
       
-      mesh.position.set(x, isPillar ? 3 : 1.5, z);
+      mesh.position.set(x, isPillar ? 3.5 : 1.6, z);
       scene.add(mesh);
       obstacleMeshes.push(mesh);
       colliders.push(new THREE.Box3().setFromObject(mesh));
     }
 
-    // 7. Render Player Avatar
+    // 7. Render Player Humanoid Avatar
+    const playerUnit = buildHumanoidSoldier(equippedSkin.color, false);
     const playerGroup = new THREE.Group();
     playerGroup.position.copy(stateRef.current.playerPos);
-    
-    // Core body block
-    const bodyMat = new THREE.MeshStandardMaterial({
-      color: new THREE.Color(equippedSkin.color),
-      roughness: 0.4,
-      metalness: 0.3
-    });
-    const bodyMesh = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.5, 1.2), bodyMat);
-    bodyMesh.castShadow = true;
-    bodyMesh.position.y = 0.75;
-    playerGroup.add(bodyMesh);
+    playerGroup.add(playerUnit.group);
 
-    // Head block with a tactical helmet
-    const headMesh = new THREE.Mesh(
-      new THREE.BoxGeometry(0.8, 0.8, 0.8),
-      new THREE.MeshStandardMaterial({ color: 0xe0a96d })
-    );
-    headMesh.position.set(0, 1.6, 0);
-    headMesh.castShadow = true;
-    playerGroup.add(headMesh);
-    
-    const helmetMesh = new THREE.Mesh(
-      new THREE.BoxGeometry(0.9, 0.3, 0.9),
-      new THREE.MeshStandardMaterial({ color: 0x1f2937 })
-    );
-    helmetMesh.position.set(0, 2.0, 0);
-    playerGroup.add(helmetMesh);
+    // Render & mount player gun to their stance
+    const playerDetailedGun = buildDetailedGun(equippedWeapon.color);
+    playerDetailedGun.position.set(0.3, 1.0, -0.4);
+    playerGroup.add(playerDetailedGun);
 
-    // Weapon mesh representation (barrel pointing forward along -z)
-    const gunMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(equippedWeapon.color), metalness: 0.8, roughness: 0.2 });
-    const gunMesh = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.25, 1.4), gunMat);
-    gunMesh.position.set(0.6, 0.8, -0.6);
-    gunMesh.castShadow = true;
-    playerGroup.add(gunMesh);
-
-    // Laser sight emission line
-    const laserMat = new THREE.LineBasicMaterial({ color: 0xff0000, opacity: 0.5, transparent: true });
-    const laserPoints = [new THREE.Vector3(0.6, 0.8, -1.2), new THREE.Vector3(0.6, 0.8, -25)];
+    // Glowing laser path line
+    const laserMat = new THREE.LineBasicMaterial({ color: 0xef4444, opacity: 0.5, transparent: true });
+    const laserPoints = [new THREE.Vector3(0.3, 1.04, -0.9), new THREE.Vector3(0.3, 1.04, -25)];
     const laserGeo = new THREE.BufferGeometry().setFromPoints(laserPoints);
     const laserLine = new THREE.Line(laserGeo, laserMat);
     playerGroup.add(laserLine);
 
     scene.add(playerGroup);
 
-    // 8. Setup Enemies Structure
+    // 8. Setup Enemies structures
     interface Enemy {
       mesh: THREE.Group;
       health: number;
@@ -257,108 +452,92 @@ export default function Battlefield({
       lastShotTime: number;
       id: string;
       wanderAngle: number;
+      unit: HumanoidModel;
     }
     const enemies: Enemy[] = [];
 
     const spawnEnemy = (id: string) => {
       const eGroup = new THREE.Group();
-      // Spawn at a perimeter distance
       const angle = Math.random() * Math.PI * 2;
-      const distance = 25 + Math.random() * 20;
+      const distance = 25 + Math.random() * 25;
       const x = playerGroup.position.x + Math.cos(angle) * distance;
       const z = playerGroup.position.z + Math.sin(angle) * distance;
       
       eGroup.position.set(
-        Math.max(-halfSize + 5, Math.min(halfSize - 5, x)),
-        0.8,
-        Math.max(-halfSize + 5, Math.min(halfSize - 5, z))
+        Math.max(-halfSize + 6, Math.min(halfSize - 6, x)),
+        0, // Let leg coordinates sit directly on ground
+        Math.max(-halfSize + 6, Math.min(halfSize - 6, z))
       );
 
-      // Enemy mesh
-      const eBody = new THREE.Mesh(
-        new THREE.BoxGeometry(1.2, 1.5, 1.2),
-        new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.5 }) // Red alert soldiers
-      );
-      eBody.position.y = 0.75;
-      eBody.castShadow = true;
-      eGroup.add(eBody);
+      // Build red enemy humanoid model
+      const eUnit = buildHumanoidSoldier('#ef4444', true);
+      eGroup.add(eUnit.group);
 
-      // Enemy Head
-      const eHead = new THREE.Mesh(
-        new THREE.BoxGeometry(0.8, 0.8, 0.8),
-        new THREE.MeshStandardMaterial({ color: 0x4b5563 })
-      );
-      eHead.position.set(0, 1.6, 0);
-      eGroup.add(eHead);
-
-      // Enemy Weapon
-      const eGun = new THREE.Mesh(
-        new THREE.BoxGeometry(0.18, 0.2, 1.2),
-        new THREE.MeshStandardMaterial({ color: 0x111827 })
-      );
-      eGun.position.set(0.6, 0.8, -0.6);
+      // Enemy weapons
+      const eGun = buildDetailedGun('#1e293b');
+      eGun.position.set(0.3, 1.0, -0.4);
       eGroup.add(eGun);
 
       scene.add(eGroup);
       enemies.push({
         mesh: eGroup,
-        health: 40 + (playerLevel * 5) + (stateRef.current.wave * 10),
-        speed: 0.05 + Math.random() * 0.04 + (stateRef.current.wave * 0.01),
+        health: 40 + (playerLevel * 5) + (stateRef.current.wave * 12),
+        speed: 0.052 + Math.random() * 0.045 + (stateRef.current.wave * 0.012),
         lastShotTime: 0,
         id,
-        wanderAngle: Math.random() * Math.PI * 2
+        wanderAngle: Math.random() * Math.PI * 2,
+        unit: eUnit
       });
     };
 
-    // First wave enemies
-    const initialEnemiesCount = 3 + wave * 2;
-    for (let s = 0; s < initialEnemiesCount; s++) {
+    // First wave spawn
+    const count = 3 + wave * 2;
+    for (let s = 0; s < count; s++) {
       spawnEnemy(`enemy_${s}`);
     }
 
-    // 9. Particle Effect System for tracer bullets and hits
-    const tracerParticles: { mesh: THREE.Mesh; step: THREE.Vector3; life: number }[] = [];
-    
-    const createTracer = (from: THREE.Vector3, to: THREE.Vector3, color: number = 0xfffd73) => {
+    // 9. Particle arrays
+    const tracers: { mesh: THREE.Mesh; step: THREE.Vector3; life: number }[] = [];
+    const hitSparks: { mesh: THREE.Mesh; vel: THREE.Vector3; life: number }[] = [];
+
+    const createTracer = (from: THREE.Vector3, to: THREE.Vector3, isEnemyTracer: boolean) => {
       const bGeo = new THREE.SphereGeometry(0.12, 4, 4);
-      const bMat = new THREE.MeshBasicMaterial({ color });
+      const bMat = new THREE.MeshBasicMaterial({ color: isEnemyTracer ? 0xff4444 : 0x60a5fa });
       const bullet = new THREE.Mesh(bGeo, bMat);
       bullet.position.copy(from);
       scene.add(bullet);
 
-      const direction = new THREE.Vector3().subVectors(to, from);
-      const dist = direction.length();
-      direction.normalize();
-      
-      tracerParticles.push({
+      const dir = new THREE.Vector3().subVectors(to, from);
+      const dist = dir.length();
+      dir.normalize();
+
+      tracers.push({
         mesh: bullet,
-        step: direction.multiplyScalar(0.8), // speed
-        life: Math.min(50, dist / 0.8)
+        step: dir.multiplyScalar(0.85),
+        life: Math.min(60, dist / 0.85)
       });
     };
 
-    // Sparks for impact
-    const hitParticles: { mesh: THREE.Mesh; vel: THREE.Vector3; life: number }[] = [];
-    const createSparks = (pos: THREE.Vector3, color: number = 0xff0000) => {
+    const createHitSparks = (pos: THREE.Vector3, color: number) => {
       const particleGeo = new THREE.BoxGeometry(0.08, 0.08, 0.08);
       const particleMat = new THREE.MeshBasicMaterial({ color });
-      for (let i = 0; i < 8; i++) {
+      for (let i = 0; i < 9; i++) {
         const p = new THREE.Mesh(particleGeo, particleMat);
         p.position.copy(pos);
         scene.add(p);
-        hitParticles.push({
+        hitSparks.push({
           mesh: p,
           vel: new THREE.Vector3(
-            (Math.random() - 0.5) * 0.3,
-            Math.random() * 0.3 + 0.1,
-            (Math.random() - 0.5) * 0.3
+            (Math.random() - 0.5) * 0.32,
+            Math.random() * 0.35 + 0.12,
+            (Math.random() - 0.5) * 0.32
           ),
-          life: 25 + Math.random() * 10
+          life: 20 + Math.random() * 12
         });
       }
     };
 
-    // Keyboard handlers
+    // Keyboard controls
     const onKeyDown = (e: KeyboardEvent) => {
       if (['w', 'a', 's', 'd', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key.toLowerCase())) {
         e.preventDefault();
@@ -368,9 +547,7 @@ export default function Battlefield({
       if (k === 'a' || e.key === 'ArrowLeft') stateRef.current.keys.a = true;
       if (k === 's' || e.key === 'ArrowDown') stateRef.current.keys.s = true;
       if (k === 'd' || e.key === 'ArrowRight') stateRef.current.keys.d = true;
-      if (e.key === ' ' || e.key === 'Spacebar') {
-        stateRef.current.keys.Space = true;
-      }
+      if (e.key === ' ' || e.key === 'Spacebar') stateRef.current.keys.Space = true;
     };
 
     const onKeyUp = (e: KeyboardEvent) => {
@@ -379,22 +556,19 @@ export default function Battlefield({
       if (k === 'a' || e.key === 'ArrowLeft') stateRef.current.keys.a = false;
       if (k === 's' || e.key === 'ArrowDown') stateRef.current.keys.s = false;
       if (k === 'd' || e.key === 'ArrowRight') stateRef.current.keys.d = false;
-      if (e.key === ' ' || e.key === 'Spacebar') {
-        stateRef.current.keys.Space = false;
-      }
+      if (e.key === ' ' || e.key === 'Spacebar') stateRef.current.keys.Space = false;
     };
 
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
 
-    // Mouse aiming handlers
+    // Mouse control listeners
     let isMouseDown = false;
     let prevMouseX = 0;
 
     const onMouseDown = (e: MouseEvent) => {
       isMouseDown = true;
       prevMouseX = e.clientX;
-      // PC shoot click
       triggerPlayerShoot();
     };
 
@@ -410,37 +584,16 @@ export default function Battlefield({
       isMouseDown = false;
     };
 
-    // Canvas click triggers pointer lock style rotation
     const domEl = renderer.domElement;
     domEl.addEventListener('mousedown', onMouseDown);
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('mouseup', onMouseUp);
 
-    // Pointer-lock alternative drag rotation on screen for mobile
-    const onTouchStartAim = (e: TouchEvent) => {
-      if (e.touches.length > 0) {
-        prevMouseX = e.touches[0].clientX;
-        isMouseDown = true;
-      }
-    };
-    const onTouchMoveAim = (e: TouchEvent) => {
-      if (isMouseDown && e.touches.length > 0) {
-        const clientX = e.touches[0].clientX;
-        const deltaX = clientX - prevMouseX;
-        stateRef.current.lookAngle -= deltaX * 0.015;
-        prevMouseX = clientX;
-      }
-    };
-    domEl.addEventListener('touchstart', onTouchStartAim, { passive: true });
-    domEl.addEventListener('touchmove', onTouchMoveAim, { passive: true });
-    domEl.addEventListener('touchend', onMouseUp);
-
-    // Shooting interval clock
+    // Shooting mechanics
     let lastPlayerShot = 0;
 
     const triggerPlayerShoot = () => {
       if (stateRef.current.isReloading || stateRef.current.ammo <= 0) {
-        // Force reload automatically
         dryReload();
         return;
       }
@@ -449,82 +602,71 @@ export default function Battlefield({
       if (now - lastPlayerShot < equippedWeapon.fireRate) return;
       lastPlayerShot = now;
 
-      // Deduct ammo
+      // Decrement ammunition
       stateRef.current.ammo -= 1;
       setAmmo(stateRef.current.ammo);
       
-      // Sound
       synths.playShoot(equippedWeapon.id as any);
 
-      // Raycast shooting calculation
-      // Calculate shooting origin: front barrel of the gun
-      // Gun world direction
-      const shootingOrigin = new THREE.Vector3(0.6, 0.8, -1.2);
-      shootingOrigin.applyMatrix4(playerGroup.matrixWorld);
+      // Gun muzzle flash points
+      const barrelMuzzlePoint = new THREE.Vector3(0.3, 1.04, -0.9);
+      barrelMuzzlePoint.applyMatrix4(playerGroup.matrixWorld);
 
-      const shootDirection = new THREE.Vector3(0, 0, -1);
-      shootDirection.applyQuaternion(playerGroup.quaternion);
-      shootDirection.normalize();
+      const lookDir = new THREE.Vector3(0, 0, -1);
+      lookDir.applyQuaternion(playerGroup.quaternion);
+      lookDir.normalize();
 
-      const shootTarget = new THREE.Vector3()
+      const targetAimPoint = new THREE.Vector3()
         .copy(playerGroup.position)
-        .add(shootDirection.clone().multiplyScalar(equippedWeapon.range));
+        .add(lookDir.clone().multiplyScalar(equippedWeapon.range));
 
-      // Visual tracer
-      createTracer(shootingOrigin, shootTarget, 0x60a5fa);
+      // Visual bullet tracers
+      createTracer(barrelMuzzlePoint, targetAimPoint, false);
 
-      // Check hits on enemies
-      // Wrap player raycast
-      const playerRay = new THREE.Ray(playerGroup.position, shootDirection);
-      let hitEnemy: Enemy | null = null;
-      let minDistance = equippedWeapon.range;
+      // Target Ray selection
+      let selectedEnemy: Enemy | null = null;
+      let closestDistance = equippedWeapon.range;
 
       enemies.forEach((enemy) => {
-        const eBox = new THREE.Box3().setFromObject(enemy.mesh);
-        // Expand combat target boxes to compensate for precision on mobile
-        const checkDstStr = playerGroup.position.distanceTo(enemy.mesh.position);
-        if (checkDstStr <= equippedWeapon.range) {
-          // Angle alignment check
-          const toEnemyVec = new THREE.Vector3().subVectors(enemy.mesh.position, playerGroup.position);
-          toEnemyVec.normalize();
-          const alignment = shootDirection.dot(toEnemyVec);
-          
-          if (alignment > 0.94) { // Tight cone aiming line
-            if (checkDstStr < minDistance) {
-              minDistance = checkDstStr;
-              hitEnemy = enemy;
+        const distanceToTarget = playerGroup.position.distanceTo(enemy.mesh.position);
+        if (distanceToTarget <= equippedWeapon.range) {
+          const toTargetVec = new THREE.Vector3().subVectors(enemy.mesh.position, playerGroup.position).normalize();
+          const targetAlignment = lookDir.dot(toTargetVec);
+
+          // Standard precise cone checking
+          if (targetAlignment > 0.94) {
+            if (distanceToTarget < closestDistance) {
+              closestDistance = distanceToTarget;
+              selectedEnemy = enemy;
             }
           }
         }
       });
 
-      if (hitEnemy) {
-        const targetEnemy = hitEnemy as Enemy;
-        targetEnemy.health -= equippedWeapon.damage;
-        createSparks(targetEnemy.mesh.position, 0xef4444);
+      if (selectedEnemy) {
+        const target = selectedEnemy as Enemy;
+        target.health -= equippedWeapon.damage;
+        createHitSparks(target.mesh.position, 0xef4444);
         synths.playHit();
 
-        if (targetEnemy.health <= 0) {
-          // Kill enemy
-          createSparks(targetEnemy.mesh.position, 0xfecdd3);
+        if (target.health <= 0) {
+          // Explode target
+          createHitSparks(target.mesh.position, 0xfecdd3);
           synths.playExplosion();
-          
-          // Remove from scene and list
-          scene.remove(targetEnemy.mesh);
-          const idx = enemies.findIndex(e => e.id === targetEnemy.id);
-          if (idx !== -1) enemies.splice(idx, 1);
+
+          scene.remove(target.mesh);
+          const iIdx = enemies.findIndex(e => e.id === target.id);
+          if (iIdx !== -1) enemies.splice(iIdx, 1);
 
           stateRef.current.kills += 1;
           setKills(stateRef.current.kills);
 
-          // Check Wave Cleared status
+          // Check if active wave has been completed successfully
           if (enemies.length === 0) {
-            // Level up/Next wave
             const nextWave = stateRef.current.wave + 1;
             stateRef.current.wave = nextWave;
             setWave(nextWave);
-            
-            // Spawn next wave!
+
             synths.playLevelUp();
             const nextCount = 3 + nextWave * 2;
             for (let s = 0; s < nextCount; s++) {
@@ -547,129 +689,142 @@ export default function Battlefield({
         setIsReloading(false);
         setAmmo(equippedWeapon.ammoCapacity);
         synths.playClick();
-      }, 1500); // 1.5s reload delay
+      }, 1500);
     };
 
-    // Main animation frame tick
-    let animationId = 0;
+    // Locomotive ticks
+    let frameId = 0;
 
-    const tick = () => {
-      // 1. Position movement input
+    const gameTick = () => {
       const moveVec = new THREE.Vector3(0, 0, 0);
-      
-      // Merge keyboard inputs
+
       if (stateRef.current.keys.w) moveVec.z -= 1;
       if (stateRef.current.keys.s) moveVec.z += 1;
       if (stateRef.current.keys.a) moveVec.x -= 1;
       if (stateRef.current.keys.d) moveVec.x += 1;
 
-      // Merge mobile touchscreen joystick controller
-      if (touchMoving) {
-        moveVec.x += joystickValue.current.x;
-        moveVec.z += joystickValue.current.y;
+      // Handle custom mobile movement
+      if (stateRef.current.touchMoving) {
+        moveVec.x += stateRef.current.joystickX;
+        moveVec.z += stateRef.current.joystickY;
       }
 
-      if (moveVec.length() > 0) {
+      const isMoving = (moveVec.length() > 0);
+
+      if (isMoving) {
         moveVec.normalize();
-        
-        // Rotate move vector according to player look angle
-        const alignedMove = new THREE.Vector3();
-        alignedMove.x = moveVec.x * Math.cos(stateRef.current.lookAngle) - moveVec.z * Math.sin(stateRef.current.lookAngle);
-        alignedMove.z = moveVec.x * Math.sin(stateRef.current.lookAngle) + moveVec.z * Math.cos(stateRef.current.lookAngle);
+
+        const alignedMove = new THREE.Vector3(moveVec.x, 0, moveVec.z);
+        alignedMove.applyAxisAngle(new THREE.Vector3(0, 1, 0), stateRef.current.lookAngle);
         alignedMove.multiplyScalar(stateRef.current.speed);
 
-        // Apply temporary next position to check crash bounds against obstacles
-        const originalPos = playerGroup.position.clone();
+        const tempPos = playerGroup.position.clone();
         playerGroup.position.add(alignedMove);
 
-        // Simple bounding box checks
-        const playerBox = new THREE.Box3().setFromObject(bodyMesh);
-        let collides = false;
+        // Compute stable custom physical collision Box centered around player's cylinder coordinates
+        const playerBox = new THREE.Box3(
+          new THREE.Vector3(playerGroup.position.x - 0.45, 0.1, playerGroup.position.z - 0.45),
+          new THREE.Vector3(playerGroup.position.x + 0.45, 1.9, playerGroup.position.z + 0.45)
+        );
+
+        let isCrashed = false;
         for (const wallBox of colliders) {
           if (playerBox.intersectsBox(wallBox)) {
-            collides = true;
+            isCrashed = true;
             break;
           }
         }
 
-        if (collides) {
-          // Revert position
-          playerGroup.position.copy(originalPos);
+        if (isCrashed) {
+          playerGroup.position.copy(tempPos);
         } else {
           stateRef.current.playerPos.copy(playerGroup.position);
-          // Gently bob head on move
-          headMesh.position.y = 1.6 + Math.sin(performance.now() * 0.015) * 0.04;
         }
       }
 
-      // Rotate player group based on aiming rotation angle
+      // Sync character aim look rotations
       playerGroup.rotation.y = stateRef.current.lookAngle;
 
-      // Shoot continuous laser/plasma fires if holding spacebar
+      // Swing civilian/soldier limbs dynamic walk cycles
+      const walkCycle = isMoving ? Math.sin(performance.now() * 0.012) * 0.55 : 0;
+      playerUnit.leftLegGroup.rotation.x = walkCycle;
+      playerUnit.rightLegGroup.rotation.x = -walkCycle;
+      playerUnit.leftArmGroup.rotation.x = -walkCycle * 0.35;
+      playerUnit.rightArmGroup.rotation.x = (walkCycle * 0.1) - 0.25;
+
+      // Continuous spray clicks when tracking trigger button active
       if (stateRef.current.keys.Space) {
         triggerPlayerShoot();
       }
 
-      // 2. Camera tracking (Third Person smooth follow)
-      const idealCameraPos = new THREE.Vector3(0, 5, 8);
-      // Align to lookAngle rotation
-      idealCameraPos.applyAxisAngle(new THREE.Vector3(0, 1, 0), stateRef.current.lookAngle);
-      idealCameraPos.add(playerGroup.position);
-      camera.position.lerp(idealCameraPos, 0.1);
-      
-      // Camera looks slightly ahead of player position
-      const lookTarget = new THREE.Vector3(0, 1.2, -4);
-      lookTarget.applyQuaternion(playerGroup.quaternion);
-      lookTarget.add(playerGroup.position);
-      camera.lookAt(lookTarget);
+      // Camera follow logic (Smooth LERP)
+      const targetCameraOffset = new THREE.Vector3(0, 5, 8.5);
+      targetCameraOffset.applyAxisAngle(new THREE.Vector3(0, 1, 0), stateRef.current.lookAngle);
+      targetCameraOffset.add(playerGroup.position);
+      camera.position.lerp(targetCameraOffset, 0.1);
 
-      // 3. Enemy logic: patrol and follow player
-      const enemyLaserMat = new THREE.LineBasicMaterial({ color: 0xef4444, opacity: 0.3, transparent: true });
-      const nowTime = performance.now();
-      
+      const lookAheadTarget = new THREE.Vector3(0, 1.15, -4);
+      lookAheadTarget.applyQuaternion(playerGroup.quaternion);
+      lookAheadTarget.add(playerGroup.position);
+      camera.lookAt(lookAheadTarget);
+
+      // Enemy locomotion behaviors
+      const currentTime = performance.now();
+
       enemies.forEach((enemy) => {
-        const dstToPlayer = enemy.mesh.position.distanceTo(playerGroup.position);
-        
-        // Look towards player
+        const dist = enemy.mesh.position.distanceTo(playerGroup.position);
         enemy.mesh.lookAt(playerGroup.position);
 
-        if (dstToPlayer > 5 && dstToPlayer < 35) {
-          // Chase player
+        let enemyIsWalking = false;
+
+        if (dist > 4 && dist < 38) {
+          enemyIsWalking = true;
           const dir = new THREE.Vector3().subVectors(playerGroup.position, enemy.mesh.position).normalize();
           const prevEnemyPos = enemy.mesh.position.clone();
           enemy.mesh.position.add(dir.multiplyScalar(enemy.speed));
 
-          // Collider checks for enemies too
-          const eBox = new THREE.Box3().setFromObject(enemy.mesh);
-          let eCollide = false;
+          // Physical collisions checks for enemies too
+          const eBox = new THREE.Box3(
+            new THREE.Vector3(enemy.mesh.position.x - 0.4, 0.1, enemy.mesh.position.z - 0.4),
+            new THREE.Vector3(enemy.mesh.position.x + 0.4, 1.8, enemy.mesh.position.z + 0.4)
+          );
+
+          let eCrashed = false;
           for (const box of colliders) {
             if (eBox.intersectsBox(box)) {
-              eCollide = true;
+              eCrashed = true;
               break;
             }
           }
-          if (eCollide) {
+          if (eCrashed) {
             enemy.mesh.position.copy(prevEnemyPos);
+            enemyIsWalking = false;
           }
         }
 
-        // Shooting intervals for enemies
-        if (dstToPlayer < 25 && nowTime - enemy.lastShotTime > 1800 - wave * 100) {
-          enemy.lastShotTime = nowTime;
-          
-          // Enemy shoot tracer
-          const shooterPoint = new THREE.Vector3(0, 0.8, -0.6).applyMatrix4(enemy.mesh.matrixWorld);
-          createTracer(shooterPoint, playerGroup.position, 0xef4444);
+        // Cycle enemy limbs
+        const eStep = parseFloat(enemy.id.replace(/[^\d]/g, '') || '0');
+        const enemyWalkCycle = enemyIsWalking ? Math.sin(performance.now() * 0.012 + eStep * 40) * 0.55 : 0;
+        enemy.unit.leftLegGroup.rotation.x = enemyWalkCycle;
+        enemy.unit.rightLegGroup.rotation.x = -enemyWalkCycle;
+        enemy.unit.leftArmGroup.rotation.x = -enemyWalkCycle * 0.35;
+        enemy.unit.rightArmGroup.rotation.x = (enemyWalkCycle * 0.1) - 0.25;
 
-          // Test hit on player
-          if (Math.random() < 0.40) { // 40% chance of a bot landing the hit
-            const rawDmg = 8 + wave * 2;
-            // Shield armor reduction
+        // Enemy weapons firing timer
+        if (dist < 26 && currentTime - enemy.lastShotTime > 1900 - wave * 100) {
+          enemy.lastShotTime = currentTime;
+
+          const muzzleLoc = new THREE.Vector3(0.3, 1.0, -0.6).applyMatrix4(enemy.mesh.matrixWorld);
+          createTracer(muzzleLoc, playerGroup.position, true);
+
+          // Landing calculations (40% accuracy)
+          if (Math.random() < 0.38) {
+            const rawDmg = 8 + wave * 2.2;
             const finalDmg = Math.round(rawDmg * equippedSkin.armorMultiplier);
             
             stateRef.current.health = Math.max(0, stateRef.current.health - finalDmg);
             setHealth(stateRef.current.health);
-            createSparks(playerGroup.position, 0xffa500); // orange shield spark
+            createHitSparks(playerGroup.position, 0xffa500); // orange shield energy flash
             synths.playHit();
 
             if (stateRef.current.health <= 0) {
@@ -679,34 +834,34 @@ export default function Battlefield({
         }
       });
 
-      // 4. Update Particle animations
-      for (let i = tracerParticles.length - 1; i >= 0; i--) {
-        const tr = tracerParticles[i];
+      // Render tracer elements
+      for (let i = tracers.length - 1; i >= 0; i--) {
+        const tr = tracers[i];
         tr.mesh.position.add(tr.step);
         tr.life -= 1;
         if (tr.life <= 0) {
           scene.remove(tr.mesh);
-          tracerParticles.splice(i, 1);
+          tracers.splice(i, 1);
         }
       }
 
-      for (let j = hitParticles.length - 1; j >= 0; j--) {
-        const hp = hitParticles[j];
+      for (let j = hitSparks.length - 1; j >= 0; j--) {
+        const hp = hitSparks[j];
         hp.mesh.position.add(hp.vel);
         hp.life -= 1;
         if (hp.life <= 0) {
           scene.remove(hp.mesh);
-          hitParticles.splice(j, 1);
+          hitSparks.splice(j, 1);
         }
       }
 
       renderer.render(scene, camera);
-      animationId = requestAnimationFrame(tick);
+      frameId = requestAnimationFrame(gameTick);
     };
 
-    tick();
+    gameTick();
 
-    // 10. Handle window responsive resizing inside Three canvas
+    // Canvas resize observers
     const handleResize = () => {
       if (!containerRef.current) return;
       const w = containerRef.current.clientWidth;
@@ -723,9 +878,9 @@ export default function Battlefield({
       resizeObserver.observe(containerRef.current);
     }
 
-    // Cleanup Everything
+    // Full system disposal
     return () => {
-      cancelAnimationFrame(animationId);
+      cancelAnimationFrame(frameId);
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
       
@@ -733,14 +888,10 @@ export default function Battlefield({
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseup', onMouseUp);
       
-      domEl.removeEventListener('touchstart', onTouchStartAim);
-      domEl.removeEventListener('touchmove', onTouchMoveAim);
-      domEl.removeEventListener('touchend', onMouseUp);
-      
       resizeObserver.disconnect();
       
-      tracerParticles.forEach(p => scene.remove(p.mesh));
-      hitParticles.forEach(p => scene.remove(p.mesh));
+      tracers.forEach(p => scene.remove(p.mesh));
+      hitSparks.forEach(p => scene.remove(p.mesh));
       enemies.forEach(e => scene.remove(e.mesh));
       obstacleMeshes.forEach(o => scene.remove(o));
       
@@ -757,43 +908,71 @@ export default function Battlefield({
     };
   }, [gameStarted, gameOver, gameWon]);
 
-  // Handle Mobile Virtual Joystick Events
+  // Touch joystick system
   const handleJoystickStart = (e: React.TouchEvent) => {
     const touch = e.touches[0];
     joystickCenter.current = { x: touch.clientX, y: touch.clientY };
     joystickCurrent.current = { x: touch.clientX, y: touch.clientY };
     setTouchMoving(true);
+    stateRef.current.touchMoving = true;
   };
 
   const handleJoystickMove = (e: React.TouchEvent) => {
-    if (!touchMoving) return;
     const touch = e.touches[0];
     joystickCurrent.current = { x: touch.clientX, y: touch.clientY };
 
     const dx = joystickCurrent.current.x - joystickCenter.current.x;
     const dy = joystickCurrent.current.y - joystickCenter.current.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
-    const maxRadius = 45; // limit drag perimeter
+    const maxRadius = 45;
 
     if (distance === 0) {
       joystickValue.current = { x: 0, y: 0 };
+      stateRef.current.joystickX = 0;
+      stateRef.current.joystickY = 0;
     } else {
       const angle = Math.atan2(dy, dx);
       const intensity = Math.min(distance, maxRadius) / maxRadius;
       
-      joystickValue.current = {
-        x: Math.cos(angle) * intensity,
-        y: Math.sin(angle) * intensity
-      };
+      const vx = Math.cos(angle) * intensity;
+      const vy = Math.sin(angle) * intensity;
+      
+      joystickValue.current = { x: vx, y: vy };
+      stateRef.current.joystickX = vx;
+      stateRef.current.joystickY = vy;
     }
   };
 
   const handleJoystickEnd = () => {
     setTouchMoving(false);
+    stateRef.current.touchMoving = false;
     joystickValue.current = { x: 0, y: 0 };
+    stateRef.current.joystickX = 0;
+    stateRef.current.joystickY = 0;
   };
 
-  // Submit Match Scores to profile storage on end
+  // Aim trackpad swipe system
+  const handleAimTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    lastAimTouchX.current = touch.clientX;
+    isAimTouching.current = true;
+  };
+
+  const handleAimTouchMove = (e: React.TouchEvent) => {
+    if (!isAimTouching.current) return;
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - lastAimTouchX.current;
+    
+    // update look direction
+    stateRef.current.lookAngle -= deltaX * 0.015;
+    lastAimTouchX.current = touch.clientX;
+  };
+
+  const handleAimTouchEnd = () => {
+    isAimTouching.current = false;
+  };
+
+  // Yield game variables back to state
   const handleMatchEndSubmit = (victory: boolean) => {
     const survivalSec = gameTime;
     const finalKills = kills;
@@ -809,7 +988,6 @@ export default function Battlefield({
     });
   };
 
-  // Trigger manually reload weapon
   const manualReload = () => {
     if (ammo < equippedWeapon.ammoCapacity && !isReloading) {
       synths.playClick();
@@ -825,11 +1003,11 @@ export default function Battlefield({
   };
 
   return (
-    <div id="combat_view_root" className="relative w-full h-[620px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex flex-col justify-between">
+    <div id="combat_view_root" className="fixed inset-0 w-screen h-screen z-50 bg-slate-950 flex flex-col justify-between overflow-hidden select-none text-right">
       
       {/* 1. Countdown Overlay */}
       {readyCountdown > 0 && (
-        <div className="absolute inset-0 bg-slate-950/90 z-40 flex flex-col items-center justify-center text-center p-6 animate-fade-in">
+        <div className="absolute inset-0 bg-slate-950/95 z-40 flex flex-col items-center justify-center text-center p-6 animate-fade-in">
           <div className="p-4 rounded-full bg-indigo-500/10 border border-indigo-500/20 mb-4 animate-bounce">
             <Swords className="w-12 h-12 text-indigo-400" />
           </div>
@@ -841,7 +1019,7 @@ export default function Battlefield({
         </div>
       )}
 
-      {/* 2. GameOver / Out of Health Overlay */}
+      {/* 2. GameOver Overlay */}
       {gameOver && (
         <div className="absolute inset-0 bg-slate-950/95 z-40 flex flex-col items-center justify-center text-center p-6 animate-fade-in">
           <div className="p-4 rounded-full bg-red-500/10 border border-red-500/20 mb-4 animate-pulse">
@@ -852,11 +1030,11 @@ export default function Battlefield({
           
           <div className="grid grid-cols-2 gap-4 bg-slate-900 border border-slate-800 p-4 rounded-xl mb-6 min-w-[280px]">
             <div className="text-center p-2">
-              <span className="block text-slate-500 text-xs">عدد القتلى</span>
+              <span className="block text-slate-500 text-xs text-right">عدد القتلى</span>
               <span className="text-white font-extrabold text-xl">{kills}</span>
             </div>
             <div className="text-center p-2">
-              <span className="block text-slate-500 text-xs">زمن البقاء</span>
+              <span className="block text-slate-500 text-xs text-right">زمن البقاء</span>
               <span className="text-white font-extrabold text-xl">{gameTime} ث</span>
             </div>
           </div>
@@ -872,7 +1050,7 @@ export default function Battlefield({
         </div>
       )}
 
-      {/* 3. Victory Wave completed (e.g. survival of 60 seconds) */}
+      {/* 3. Victory Overlay */}
       {(gameTime >= 60 || kills >= 12) && !gameOver && (
         <div className="absolute inset-0 bg-slate-950/95 z-40 flex flex-col items-center justify-center text-center p-6 animate-fade-in">
           <div className="p-4 rounded-full bg-yellow-500/10 border border-yellow-500/20 mb-4 animate-bounce">
@@ -883,15 +1061,15 @@ export default function Battlefield({
 
           <div className="grid grid-cols-3 gap-3 bg-slate-900 border border-slate-800 p-4 rounded-xl mb-6 min-w-[320px]">
             <div className="text-center p-1">
-              <span className="block text-slate-500 text-xs">المستوى</span>
-              <span className="text-yellow-400 font-extrabold text-lg">+{kills * 35 + 150} XP</span>
+              <span className="block text-slate-500 text-[10px] text-right">المستوى</span>
+              <span className="text-yellow-400 font-extrabold text-xs">+{kills * 35 + 150} XP</span>
             </div>
             <div className="text-center p-1">
-              <span className="block text-slate-500 text-xs">الذهب المكتسب</span>
-              <span className="text-yellow-400 font-extrabold text-lg">+{kills * 15 + 80} 🪙</span>
+              <span className="block text-slate-500 text-[10px] text-right">الذهب المكتسب</span>
+              <span className="text-yellow-400 font-extrabold text-xs">+{kills * 15 + 80} 🪙</span>
             </div>
             <div className="text-center p-1">
-              <span className="block text-slate-500 text-xs">الأعداء المحيدين</span>
+              <span className="block text-slate-500 text-[10px] text-right">الأعداء المحيدين</span>
               <span className="text-white font-extrabold text-lg">{kills}</span>
             </div>
           </div>
@@ -907,26 +1085,26 @@ export default function Battlefield({
         </div>
       )}
 
-      {/* 4. Battlefield Header (HUD info) */}
-      <div className="relative z-10 w-full bg-slate-950/80 backdrop-blur-md border-b border-slate-800 p-4 flex items-center justify-between text-white">
+      {/* 4. Battlefield HUD Headbar */}
+      <div className="relative z-30 w-full bg-slate-950/80 backdrop-blur-md border-b border-slate-800/80 p-4 flex items-center justify-between text-white">
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-950/50 border border-red-500/20 text-red-400">
-            <Shield className="w-4 h-4 text-red-400 animate-pulse" />
-            <span className="text-sm font-bold">{health}% HP</span>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-950/50 border border-red-500/30 text-red-400 shadow">
+            <Shield className="w-4 h-4 text-red-400 animate-bounce" />
+            <span className="text-sm font-bold font-mono">{health}% HP</span>
           </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-green-950/50 border border-green-500/20 text-green-400">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-green-950/50 border border-green-500/30 text-green-400 shadow">
             <Target className="w-4 h-4 text-green-400" />
-            <span className="text-sm font-bold">
-              {isReloading ? "إعادة تلقيم..." : `${ammo} / ♾️`}
+            <span className="text-sm font-bold font-mono">
+              {isReloading ? "تعمير..." : `${ammo} / ♾️`}
             </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-4 text-xs font-mono text-slate-300">
+        <div className="hidden md:flex items-center gap-3 text-xs font-mono text-slate-300">
           <div className="px-2.5 py-1 rounded bg-slate-900 border border-slate-800">
             الخريطة: {activeMap.nameAr}
           </div>
-          <div className="px-2.5 py-1 rounded bg-slate-900 border border-slate-800 text-yellow-400">
+          <div className="px-2.5 py-1 rounded bg-slate-900 border border-slate-800 text-yellow-400 font-bold">
             الموجة {wave}
           </div>
           <div className="px-2.5 py-1 rounded bg-slate-900 border border-slate-800">
@@ -940,37 +1118,53 @@ export default function Battlefield({
         <button
           id="exit_combat_early_btn"
           onClick={onExit}
-          className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 hover:text-red-400 rounded-lg text-xs font-medium border border-slate-700 transition"
+          className="px-4 py-2 bg-slate-800 hover:bg-red-700 hover:text-white rounded-lg text-xs font-bold border border-slate-700 transition"
         >
           انسحاب 🏳️
         </button>
       </div>
 
-      {/* 5. 3D WebGL Canvas Holder */}
+      {/* 5. 3D WebGL Canvas Area */}
       <div
         id="three_canvas_container"
         ref={containerRef}
         className="w-full h-full relative cursor-crosshair overflow-hidden touch-none"
       >
-        {/* Mobile controls hints overlay */}
-        <div className="absolute right-4 top-4 pointer-events-none p-3 rounded-lg bg-slate-900/60 backdrop-blur-sm border border-slate-800 max-w-[200px]">
-          <span className="text-[10px] text-indigo-400 font-bold block mb-1">🎮 تلميحات أزرار التحكم</span>
-          <span className="text-[10px] text-slate-300 block">💻 للكمبيوتر: WASD للمشي + السحب بالفأرة للتصويب + نقر/مسطرة إطلاق</span>
-          <span className="text-[10px] text-slate-300 block">📱 للهاتف: عصا اللعب اليمين للتصويب + لوحة التحكم اليسارية و زر الضرب</span>
+        {/* Right Half Swipe Trackpad overlay for looking direction */}
+        <div
+          id="touch_swipe_aim_pad"
+          onTouchStart={handleAimTouchStart}
+          onTouchMove={handleAimTouchMove}
+          onTouchEnd={handleAimTouchEnd}
+          className="absolute right-0 top-0 bottom-0 w-1/2 z-20 select-none touch-none active:bg-white/5 flex flex-col items-center justify-center pointer-events-auto"
+        >
+          <div className="p-3 bg-slate-950/80 backdrop-blur-sm border border-indigo-500/20 rounded-xl flex items-center gap-1.5 opacity-30 active:opacity-90 hover:opacity-100 transition duration-150 pointer-events-none select-none">
+            <Crosshair className="w-4.5 h-4.5 text-indigo-400 animate-spin" />
+            <span className="text-[10px] text-slate-300 font-black uppercase tracking-wider">
+               اسحب السلك للتوجيه والتصويب 🔄
+            </span>
+          </div>
+        </div>
+
+        {/* Floating live score panel for mobile layout density */}
+        <div className="absolute left-4 top-4 pointer-events-none p-3 rounded-xl bg-slate-950/80 backdrop-blur-md border border-slate-800/80 max-w-[160px] z-20 text-right md:hidden space-y-1">
+          <span className="text-[10px] text-amber-400 font-bold block">الموجة الحالية: {wave}</span>
+          <span className="text-[10px] text-rose-400 font-bold block">الأعداء المقتولين: {kills}</span>
+          <span className="text-[10px] text-slate-300 font-bold block">الوقت المنقضي: {gameTime} ث</span>
         </div>
       </div>
 
-      {/* 6. Battlefield Footer / Action Panel (For Touch Screens/Mobile and reloading support) */}
-      <div className="relative z-10 w-full bg-slate-950/90 border-t border-slate-800 p-4 flex items-center justify-between pb-6 gap-6">
+      {/* 6. Gameplay Action Controllers Footbar */}
+      <div className="relative z-30 w-full bg-slate-950/90 border-t border-slate-800/80 p-4 flex items-center justify-between pb-6 gap-6">
         
-        {/* Joystick Zone (Left) */}
+        {/* Bottom Left: Walk Joystick zone */}
         <div className="flex items-center gap-2">
           <div
             id="mobile_joystick_container"
             onTouchStart={handleJoystickStart}
             onTouchMove={handleJoystickMove}
             onTouchEnd={handleJoystickEnd}
-            className="w-24 h-24 rounded-full bg-slate-900 border-2 border-slate-700/80 relative flex items-center justify-center cursor-default select-none active:border-indigo-500"
+            className="w-24 h-24 rounded-full bg-slate-900 border-2 border-slate-700/80 relative flex items-center justify-center cursor-default select-none active:border-indigo-500 pointer-events-auto"
           >
             <div
               className="w-10 h-10 rounded-full bg-indigo-500/80 shadow-lg absolute transition-all duration-75 pointer-events-none"
@@ -981,18 +1175,18 @@ export default function Battlefield({
             />
             <span className="absolute bottom-1 text-[8px] text-slate-500">مشي (WASD)</span>
           </div>
-          <span className="text-xs text-slate-400 text-right font-sans hidden md:inline max-w-xs leading-5">
-            <b>توجيه الهاتف 🕹️:</b> لغرض الحركة السلسة، اسحب المستشعر المركزي يساراً أو يميناً. اضرب بالمؤشر اليمين.
+          <span className="text-[11px] text-slate-500 text-right font-sans hidden lg:inline max-w-xs leading-relaxed">
+            <b>تحريك الهاتف اليدوي 🕹️:</b> استخدم الإبهام الأيسر على الدائرة للتحرك، واسحب يسار/يمين بالنصف الأيمن للتصويب والتبديل!
           </span>
         </div>
 
-        {/* Action Controls (Right) */}
-        <div className="flex items-center gap-4">
+        {/* Bottom Right: Bullet shoot action and manual reloading triggers */}
+        <div className="flex items-center gap-4 pointer-events-auto">
           <button
             id="reload_action_btn"
             onClick={manualReload}
             disabled={isReloading}
-            className="px-4 py-3 bg-slate-800 active:bg-slate-700 border border-slate-700 rounded-xl text-white font-semibold text-sm transition duration-150 flex items-center gap-1.5"
+            className="px-4.5 py-4 bg-slate-900 active:bg-slate-800 border border-slate-800 hover:border-indigo-500/40 rounded-2xl text-slate-100 font-extrabold text-xs transition duration-150 flex items-center gap-2 cursor-pointer"
           >
             <RotateCcw className={`w-4 h-4 ${isReloading ? 'animate-spin' : ''}`} />
             تعبئة (Reload)
@@ -1015,10 +1209,10 @@ export default function Battlefield({
             onMouseLeave={() => {
               stateRef.current.keys.Space = false;
             }}
-            className="px-6 py-4.5 bg-red-600 active:bg-red-700 text-white font-black rounded-2xl shadow-xl transition select-none flex items-center gap-2 text-base cursor-pointer"
+            className="w-20 h-20 rounded-full bg-gradient-to-tr from-red-600 to-rose-500 hover:scale-105 active:scale-95 text-white font-black shadow-lg shadow-red-600/30 transition select-none flex flex-col items-center justify-center gap-0.5 cursor-pointer border-2 border-red-400/30"
           >
-            <Crosshair className="w-5 h-5 animate-pulse" />
-            إطلاق النار 💥
+            <Crosshair className="w-6 h-6 animate-pulse" />
+            <span className="text-[10px] font-bold">إطلاق 💥</span>
           </button>
         </div>
       </div>
